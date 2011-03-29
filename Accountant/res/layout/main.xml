@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Amount" android:id="@+id/amount_label"></TextView>
+    <LinearLayout android:layout_height="wrap_content" android:id="@+id/linearLayout1" android:layout_width="match_parent">
+        <EditText android:numeric="decimal" android:layout_height="wrap_content" android:hint="@string/amount" android:layout_width="wrap_content" android:id="@+id/amount" android:inputType="phone|numberDecimal"></EditText>
+        <Spinner android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/booking_type_spinner"></Spinner>
+    </LinearLayout>
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_label" android:text="@string/text"></TextView>
+    <EditText android:layout_height="wrap_content" android:layout_width="match_parent" android:hint="@string/text" android:id="@+id/text_edit"></EditText>
+    <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="@string/bank" android:id="@+id/source_label"></TextView>
+    <Spinner android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/source_spinner"></Spinner>
+    <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="@string/category" android:id="@+id/dest_label"></TextView>
+    <Spinner android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/dest_spinner"></Spinner>
+    <Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/create_booking_button" android:text="@string/create_booking"></Button>
+</LinearLayout>

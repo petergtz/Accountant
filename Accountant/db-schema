@@ -1,0 +1,6 @@
+amount : decimal
+type : OUTCOME, INCOME, TRANSACTION
+text : string
+bank : account_id
+category : account_id
+datetime : timestamp
