@@ -20,7 +20,7 @@ public class AccountancyContentProviderTest extends ProviderTestCase2<Accountanc
     public void testIfCanInsertAndQueryBooking() {
         MockContentResolver mockResolver = getMockContentResolver();
         BookingsRepository bookings = new BookingsRepository(mockResolver);
-        bookings.insert(123, "Lidl", "VB", "Essen", "");
+        bookings.insert("123", "Lidl", "VB", "Essen", "");
         
         Cursor cursor = bookings.getFull(1);
         assertEquals(1, cursor.getCount());
@@ -34,7 +34,7 @@ public class AccountancyContentProviderTest extends ProviderTestCase2<Accountanc
     
     
     
-    public void testIfCanInsertAndQueryAccount() {
+    public void testIfCanInsertAndQueryAllAccounts() {
         MockContentResolver mockResolver = getMockContentResolver();
         AccountsRepository accounts = new AccountsRepository(mockResolver);
         accounts.addBank("Volksbank");
@@ -52,6 +52,38 @@ public class AccountancyContentProviderTest extends ProviderTestCase2<Accountanc
         assertEquals("Commerzbank", c.getString(Accounts.NAME_INDEX));
         assertEquals(AccountType.BANK.ordinal(),c.getInt(Accounts.TYPE_INDEX));
     }
+    
+    
+    public void testIfCanInsertAndQuerySpecificAccountTypes() {
+        MockContentResolver mockResolver = getMockContentResolver();
+        AccountsRepository accounts = new AccountsRepository(mockResolver);
+        accounts.addBank("Volksbank");
+        accounts.addBank("DKB");
+        accounts.addBank("Commerzbank");
+        accounts.addDestCategory("Essen");
+        accounts.addDestCategory("Zug");
+        accounts.addIncomeSource("Gehalt");
+        Cursor c = accounts.queryBanks();
+        assertEquals(3, c.getCount());
+        c.moveToNext();
+        assertEquals("Volksbank", c.getString(Accounts.NAME_INDEX));
+        c.moveToNext();
+        assertEquals("DKB", c.getString(Accounts.NAME_INDEX));
+        c.moveToNext();
+        assertEquals("Commerzbank", c.getString(Accounts.NAME_INDEX));
+
+        c = accounts.queryDestCategory();
+        assertEquals(2, c.getCount());
+        c.moveToNext();
+        assertEquals("Essen", c.getString(Accounts.NAME_INDEX));
+        c.moveToNext();
+        assertEquals("Zug", c.getString(Accounts.NAME_INDEX));
+
+        c = accounts.queryIncomeSources();
+        assertEquals(1, c.getCount());
+        c.moveToNext();
+        assertEquals("Gehalt", c.getString(Accounts.NAME_INDEX));
+}
     
     
     

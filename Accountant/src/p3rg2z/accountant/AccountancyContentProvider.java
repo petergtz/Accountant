@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.BaseColumns;
 
 
@@ -25,7 +26,7 @@ public class AccountancyContentProvider extends ContentProvider {
         public static final String TEXT = "text";
         public static final String SOURCE = "source";
         public static final String DEST = "dest";
-        public static final String DATETIME = "datetime";
+        public static final String DATE = "datetime";
         
         public static final int AMOUNT_INDEX = 0;
         public static final int TEXT_INDEX = 1;
@@ -46,8 +47,8 @@ public class AccountancyContentProvider extends ContentProvider {
         public static final String NAME = "name";
         public static final String TYPE = "type";
         
-        public static final int NAME_INDEX = 0;
-        public static final int TYPE_INDEX = 1;
+        public static final int NAME_INDEX = 1;
+        public static final int TYPE_INDEX = 2;
         
         private Accounts() {}
     }
@@ -56,30 +57,34 @@ public class AccountancyContentProvider extends ContentProvider {
     
     @Override
     public boolean onCreate() {
-        _openHelper = new SQLiteOpenHelper(getContext(), getContext().getExternalFilesDir(null)+"/" +"accountant.db", null, 2) {
-            @Override
-            public void onCreate(SQLiteDatabase db) {
-                db.execSQL("CREATE TABLE " + BOOKINGS + " ("
-                        + Bookings._ID + " INTEGER PRIMARY KEY,"
-                        + Bookings.AMOUNT + " INTEGER,"
-                        + Bookings.TEXT + " TEXT,"
-                        + Bookings.SOURCE + " TEXT,"
-                        + Bookings.DEST + " TEXT,"
-                        + Bookings.DATETIME + " TEXT);");
-                db.execSQL("CREATE TABLE " + ACCOUNTS
-                        + " (" + Accounts._ID +" INTEGER PRIMARY KEY,"
-                        + Accounts.NAME + " TEXT, "
-                        + Accounts.TYPE + " INTEGER);");
-            }
-
-            @Override
-            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                db.execSQL("DROP TABLE IF EXISTS " + BOOKINGS);
-                db.execSQL("DROP TABLE IF EXISTS" + ACCOUNTS);
-                onCreate(db);
-            }
-        };
-        return true;
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            _openHelper = new SQLiteOpenHelper(getContext(), getContext().getExternalFilesDir(null)+"/" +"accountant.db", null, 2) {
+                @Override
+                public void onCreate(SQLiteDatabase db) {
+                    db.execSQL("CREATE TABLE " + BOOKINGS + " ("
+                            + Bookings._ID + " INTEGER PRIMARY KEY,"
+                            + Bookings.AMOUNT + " INTEGER,"
+                            + Bookings.TEXT + " TEXT,"
+                            + Bookings.SOURCE + " TEXT,"
+                            + Bookings.DEST + " TEXT,"
+                            + Bookings.DATE + " TEXT);");
+                    db.execSQL("CREATE TABLE " + ACCOUNTS
+                            + " (" + Accounts._ID +" INTEGER PRIMARY KEY,"
+                            + Accounts.NAME + " TEXT, "
+                            + Accounts.TYPE + " INTEGER);");
+                }
+    
+                @Override
+                public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                    db.execSQL("DROP TABLE IF EXISTS " + BOOKINGS);
+                    db.execSQL("DROP TABLE IF EXISTS" + ACCOUNTS);
+                    onCreate(db);
+                }
+            };
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private static final int BOOKINGS_QUERY = 1;
@@ -106,8 +111,8 @@ public class AccountancyContentProvider extends ContentProvider {
                     BOOKINGS, projection, "_ID = ?", new String[] { uri.getLastPathSegment() },
                     null, null, null);
         case ACCOUNTS_QUERY:
-            return _openHelper.getReadableDatabase().query(ACCOUNTS, projection, 
-                    null, null, null, null, null);
+            return _openHelper.getReadableDatabase().query(
+                    ACCOUNTS, projection, selection, selectionArgs, null, null, sortOrder);
         case ACCOUNTS_ID_QUERY:
             throw new UnsupportedOperationException();
         default:

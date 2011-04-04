@@ -1,25 +1,28 @@
 package p3rg2z.accountant;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import p3rg2z.accountant.AccountancyContentProvider.AccountType;
 import p3rg2z.accountant.AccountancyContentProvider.Accounts;
+import p3rg2z.accountant.AccountancyContentProvider.Bookings;
 import android.app.Activity;
-import android.content.Context;
+import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.database.Cursor;
-import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CursorAdapter;
 import android.widget.EditText;
 import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
 
 public class NewBookingActivity extends Activity {
     
@@ -31,18 +34,46 @@ public class NewBookingActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-        Spinner bookingTypeSpinner = (Spinner)findViewById(R.id.booking_type_spinner);
-        ArrayAdapter<CharSequence> adapter = /*ArrayAdapter.createFromResource(
-                this, R.array.booking_type, android.R.layout.simple_spinner_item);*/
-            new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item, 
-                    new String[] { 
-                        getString(R.string.booking_type_out), 
-                        getString(R.string.booking_type_in), 
-                        getString(R.string.booking_type_transaction)});
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        bookingTypeSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+        String[] BOOKING_TYPES = new String[] { 
+            getString(R.string.booking_type_out), 
+            getString(R.string.booking_type_in), 
+            getString(R.string.booking_type_transaction)};
+
+        setContentView(R.layout.main);
+        
+        ContentProviderClient cr = getContentResolver().acquireContentProviderClient(Bookings.CONTENT_URI);
+        cr.getClass();
+        
+        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            Toast.makeText(getApplicationContext(), "SD card not mounted", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        final EditText amountInput = (EditText)findViewById(R.id.amount);
+        
+        if (isInTestMode()) {
+            amountInput.setBackgroundColor(0xffffbb77);
+        }
+        
+        final EditText textInput = (EditText)findViewById(R.id.text_edit);
+        final Spinner bookingTypeInput = (Spinner)findViewById(R.id.booking_type_spinner);
+        final Spinner sourceInput = (Spinner) findViewById(R.id.source_spinner);
+        final Spinner destInput = (Spinner) findViewById(R.id.dest_spinner);
+        final Button createBookingButton = (Button)findViewById(R.id.create_booking_button);
+
+        ArrayAdapter<CharSequence> bookingTypeAdapter = new ArrayAdapter<CharSequence>(this, 
+                android.R.layout.simple_spinner_item, BOOKING_TYPES);
+        bookingTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        
+        
+        final SimpleCursorAdapter banksAdapter = createAccountAdapter(AccountType.BANK);
+        final SimpleCursorAdapter destCategoriesAdapter = createAccountAdapter(AccountType.DEST_CATEGORY);
+        final SimpleCursorAdapter incomeSourceAdapter = createAccountAdapter(AccountType.INCOME_SOURCE);
+        final SimpleCursorAdapter allAccountsAdapter = createAccountAdapter(null);
+        
+        bookingTypeInput.setOnItemSelectedListener(new OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> paramAdapterView,
@@ -50,12 +81,21 @@ public class NewBookingActivity extends Activity {
 
                 if (index == BookingType.EXPENSE.ordinal()) {
                     ((TextView) findViewById(R.id.source_label)).setText(R.string.bank);
+                    ((TextView) findViewById(R.id.dest_label)).setText(R.string.category);
+                    sourceInput.setAdapter(banksAdapter);
+                    destInput.setAdapter(destCategoriesAdapter);
                 } else if (index == BookingType.INCOME.ordinal()) {
                     ((TextView) findViewById(R.id.source_label)).setText(R.string.income_source);
+                    ((TextView) findViewById(R.id.dest_label)).setText(R.string.bank);
+                    sourceInput.setAdapter(incomeSourceAdapter);
+                    destInput.setAdapter(banksAdapter);
                 } else if (index == BookingType.TRANSACTION.ordinal()) {
                     ((TextView) findViewById(R.id.source_label)).setText(R.string.source);
+                    ((TextView) findViewById(R.id.dest_label)).setText(R.string.destination);
+                    sourceInput.setAdapter(allAccountsAdapter);
+                    destInput.setAdapter(allAccountsAdapter);
                 } else {
-                    throw new RuntimeException();
+                    throw new UnsupportedOperationException();
                 }
             }
 
@@ -65,28 +105,75 @@ public class NewBookingActivity extends Activity {
             }
         });
 
-        bookingTypeSpinner.setAdapter(adapter);
+        bookingTypeInput.setAdapter(bookingTypeAdapter);
         
-        final EditText amountEdit = (EditText) findViewById(R.id.amount);
-        final Spinner source = (Spinner) findViewById(R.id.source_spinner);
-        Cursor c = getContentResolver().query(Accounts.CONTENT_URI, new String[] { Accounts._ID, Accounts.NAME }, null, null, null);
-        int count = c.getCount();
-        source.setAdapter(new SimpleCursorAdapter(this, R.layout.accountlistitem, 
-                c, new String[] { Accounts.NAME }, new int[] { R.id.account_name }));
-        final Spinner dest = (Spinner) findViewById(R.id.dest_spinner);
+        final BookingsRepository bookings;
+        if (getContentResolver() != null) {
+            bookings = new BookingsRepository(getContentResolver());
+        } else {
+            bookings = null;
+            Toast.makeText(getApplicationContext(), "SD card not mountet", Toast.LENGTH_LONG);
+        }
         
-        final BookingsRepository repo = new BookingsRepository(getContentResolver());
-        
-        Button button = (Button)findViewById(R.id.create_booking_button);
-        button.setOnClickListener(new OnClickListener() {
+        createBookingButton.setOnClickListener(new OnClickListener() {
             
             @Override
             public void onClick(View paramView) {
-//                repo.insert(Integer.valueOf(amountEdit.getText().toString()), 
-//                        source.getSelectedView().get
-//                        text, bank, category, datetime);
-//                getContentResolver().insert(AccountancyContentProvider.Bookings.CONTENT_URI, values)
+                String amount = amountInput.getText().toString();
+                Pattern p = Pattern.compile("(\\d*)[\\.,]?([0-9]{0,2})");
+                Matcher m = p.matcher(amount);
+                
+                
+                if (m.matches()) {
+                    String first = m.group(1);
+                    String second = m.group(2);
+                    String amountValidated = first + "." + second;
+                    bookings.insert(amountValidated, 
+                            textInput.getText().toString(),
+                            ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX), 
+                            ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
+                            java.util.Calendar.getInstance().getTime().toLocaleString());
+
+                    Toast.makeText(getApplicationContext(), String.format("Saved new booking \"%s\": %s", 
+                            textInput.getText().toString(), amountValidated), Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "INVALID", Toast.LENGTH_LONG).show();
+                }
+                
             }
         });
     }
+    
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        final EditText amountInput = (EditText)findViewById(R.id.amount);
+//        amountInput.requestFocusFromTouch();
+//    }
+    
+    private SimpleCursorAdapter createAccountAdapter(AccountType type) {
+        SimpleCursorAdapter result;
+        if (type == null) {
+            result = new SimpleCursorAdapter(this, R.layout.accountlistitem, 
+                    new AccountsRepository(getContentResolver()).queryAll(),
+                    new String[] { Accounts.NAME }, new int[] { R.id.account_name });
+        } else {
+            result = new SimpleCursorAdapter(this, R.layout.accountlistitem, 
+                    new AccountsRepository(getContentResolver()).queryType(type),
+                    new String[] { Accounts.NAME }, new int[] { R.id.account_name });
+        }
+        result.setDropDownViewResource(R.layout.accountdropdownitem);
+
+        return result;
+    }
+    
+    protected boolean isInTestMode() {
+        return false;
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+    
 }

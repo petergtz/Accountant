@@ -35,8 +35,26 @@ public class AccountsRepository {
     }
     
     public Cursor queryAll() {
-        return resolver.query(Accounts.CONTENT_URI, new String[] { Accounts.NAME, Accounts.TYPE }, 
+        return resolver.query(Accounts.CONTENT_URI, new String[] { Accounts._ID, Accounts.NAME }, 
                 null, null, null);
+    }
+
+    public Cursor queryBanks() {
+        return queryType(AccountType.BANK);
+    }
+
+    public Cursor queryIncomeSources() {
+        return queryType(AccountType.INCOME_SOURCE);
+    }
+
+    public Cursor queryDestCategory() {
+        return queryType(AccountType.DEST_CATEGORY);
+    }
+
+    public Cursor queryType(AccountType type) {
+        return resolver.query(Accounts.CONTENT_URI, 
+                new String[] { Accounts._ID, Accounts.NAME }, 
+                Accounts.TYPE + "= ?", new String[] { String.valueOf(type.ordinal()) }, null);
     }
 
 }

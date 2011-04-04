@@ -7,15 +7,11 @@
     <string name="booking_type_in">Income</string>
     <string name="booking_type_out">Expense</string>
     <string name="booking_type_transaction">Transaction</string>
-    <string-array name="booking_type">
-        <item>@string/booking_type_in</item>
-        <item>@string/booking_type_out</item>
-        <item>@string/booking_type_transaction</item>
-    </string-array>
     <string name="text">Text</string>
     <string name="bank">Bank</string>
     <string name="category">Category</string>
     <string name="income_source">Income Source</string>
     <string name="source">Source</string>
     <string name="destination">Destination</string>
+    <color name="red">#FF0000</color>
 </resources>

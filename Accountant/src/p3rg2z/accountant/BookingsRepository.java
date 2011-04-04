@@ -13,20 +13,19 @@ public class BookingsRepository {
         this.resolver = resolver;
     }
     
-    public void insert(int amount, String text, String bank, String category, String datetime) {
+    public void insert(String amount, String text, String bank, String category, String datetime) {
         ContentValues values = new ContentValues();
         values.put(Bookings.AMOUNT, amount);
-//        values.put(Bookings.TYPE, type.ordinal());
         values.put(Bookings.TEXT, text);
         values.put(Bookings.SOURCE, bank);
         values.put(Bookings.DEST, category);
-        values.put(Bookings.DATETIME, datetime);
+        values.put(Bookings.DATE, datetime);
         resolver.insert(Bookings.CONTENT_URI, values);
     }
     
     public Cursor getFull(long id) {
         return resolver.query(ContentUris.withAppendedId(Bookings.CONTENT_URI, id), 
-                new String[] {Bookings.AMOUNT, Bookings.TEXT, Bookings.SOURCE, Bookings.DEST, Bookings.DATETIME },
+                new String[] {Bookings.AMOUNT, Bookings.TEXT, Bookings.SOURCE, Bookings.DEST, Bookings.DATE },
                 null, null, null);
     }
 
