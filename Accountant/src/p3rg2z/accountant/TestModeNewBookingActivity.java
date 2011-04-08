@@ -5,4 +5,9 @@ public class TestModeNewBookingActivity extends NewBookingActivity {
     protected boolean isInTestMode() {
         return true;
     }
+    
+    @Override
+    protected Data getData() {
+        return new Data(getApplicationContext(), getExternalFilesDir(null)+"/" +"test-accountant.db");
+    }
 }

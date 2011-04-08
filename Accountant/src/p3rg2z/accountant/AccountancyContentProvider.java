@@ -57,7 +57,7 @@ public class AccountancyContentProvider extends ContentProvider {
     
     @Override
     public boolean onCreate() {
-        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+//        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             _openHelper = new SQLiteOpenHelper(getContext(), getContext().getExternalFilesDir(null)+"/" +"accountant.db", null, 2) {
                 @Override
                 public void onCreate(SQLiteDatabase db) {
@@ -82,9 +82,9 @@ public class AccountancyContentProvider extends ContentProvider {
                 }
             };
             return true;
-        } else {
-            return false;
-        }
+//        } else {
+//            return false;
+//        }
     }
 
     private static final int BOOKINGS_QUERY = 1;

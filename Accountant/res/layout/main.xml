@@ -14,5 +14,6 @@
     <Spinner android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/source_spinner"></Spinner>
     <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="@string/category" android:id="@+id/dest_label"></TextView>
     <Spinner android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/dest_spinner"></Spinner>
+    <Spinner android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/spinnertest"></Spinner>
     <Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/create_booking_button" android:text="@string/create_booking"></Button>
 </LinearLayout>
