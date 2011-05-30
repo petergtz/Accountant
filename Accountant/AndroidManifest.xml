@@ -6,7 +6,7 @@
 
 
     <application android:icon="@drawable/icon" android:label="@string/app_name">
-        <activity android:name="TestModeNewBookingActivity">
+        <activity android:name="TestModeNewBookingActivity" android:label="TestNewBooking">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -18,7 +18,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <provider android:name="AccountancyContentProvider" android:authorities="p3rg2z.accountant.accountancycontentprovider"></provider>
-
+        <activity android:name="TextChooseActivity">
+        </activity>
+        <activity android:name="BookingsListActivity">
+            <intent-filter>
+                <category android:name="android.intent.category.LAUNCHER"></category>
+                <action android:name="android.intent.action.MAIN"></action>
+            </intent-filter>
+        </activity>
+        <activity android:name="TestModeBookingsListActivity">
+            <intent-filter>
+                <category android:name="android.intent.category.LAUNCHER"></category>
+                <action android:name="android.intent.action.MAIN"></action>
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

@@ -14,4 +14,7 @@
     <string name="source">Source</string>
     <string name="destination">Destination</string>
     <color name="red">#FF0000</color>
+    <string name="choose">Choose</string>
+    <string name="date">Date</string>
+    <string name="bookings_list">Bookings List</string>
 </resources>
