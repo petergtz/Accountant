@@ -31,7 +31,8 @@ import java.util.GregorianCalendar;
 
 public class NewBookingActivity extends Activity {
     
-    private EditText textInput;
+    private static final int CHOOSE_TEXT_REQUEST_CODE = 3;
+	private EditText textInput;
     private Spinner bookingTypeInput;
     private Spinner sourceInput;
     private Spinner destInput;
@@ -47,16 +48,14 @@ public class NewBookingActivity extends Activity {
         EXPENSE, INCOME, TRANSACTION
     }
     
-    protected Data getData() {
-        return Data.create(getApplicationContext(), getExternalFilesDir(null));
-    }
-    
-    /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.newbooking);
-        Toast.makeText(getApplicationContext(), "onCreate", Toast.LENGTH_LONG).show(); 
+        if (isInTestMode()) {
+            Toast.makeText(getApplicationContext(), "onCreate", Toast.LENGTH_LONG).show(); 
+            setTitleColor(0xffff0000);
+        }
 
         if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             Toast.makeText(getApplicationContext(), "SD card not mounted", Toast.LENGTH_LONG).show();
@@ -65,11 +64,6 @@ public class NewBookingActivity extends Activity {
 
         initMembers();
 
-        if (isInTestMode()) {
-            setTitleColor(0xffff0000);
-            setTitle(getTitle() + " TEST MODE");
-        }
-        
         setUpBookingTypeButton();
         setUpBookingButton();
         setUpTextChooserButton();
@@ -183,9 +177,9 @@ public class NewBookingActivity extends Activity {
     private void setUpTextChooserButton() {
         textChooserButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                startActivityForResult(new Intent("skjdhfkjdshfkjs").
-                    setComponent(new ComponentName("p3rg2z.accountant", "p3rg2z.accountant.TextChooseActivity")), 
-                    3);
+                startActivityForResult(new Intent().
+                    setComponent(new ComponentName("p3rg2z.accountant", getTextChooseActivityName())), 
+                    CHOOSE_TEXT_REQUEST_CODE);
             }
         });
     }
@@ -214,16 +208,24 @@ public class NewBookingActivity extends Activity {
         Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (data != null) {
+            textInput.setText(data.getAction());
+        }
+        Toast.makeText(getApplicationContext(), ""+ requestCode + " " + resultCode + " " + data, Toast.LENGTH_LONG).show();
+    }
+      
+    protected Data getData() {
+        return Data.create(getApplicationContext(), getExternalFilesDir(null));
+    }
+    
     protected boolean isInTestMode() {
         return false;
     }
     
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        textInput.setText(data.getAction());
-        Toast.makeText(getApplicationContext(), ""+ requestCode + " " + resultCode + " " + data, Toast.LENGTH_LONG).show();
+    protected String getTextChooseActivityName() {
+    	return "p3rg2z.accountant.TextChooseActivity";
     }
-      
-    
 }

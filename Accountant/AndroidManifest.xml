@@ -2,17 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="p3rg2z.accountant"
       android:versionCode="1"
-      android:versionName="1.0">
-
-
-    <application android:icon="@drawable/icon" android:label="@string/app_name">
-        <activity android:name="TestModeNewBookingActivity" android:label="TestNewBooking">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:label="@string/app_name" android:name="NewBookingActivity">
+      android:versionName="1.0"><application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
+        <activity android:name="NewBookingActivity" android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -21,16 +12,15 @@
         <activity android:name="TextChooseActivity">
         </activity>
         <activity android:name="BookingsListActivity">
+        </activity>
+        <activity android:name="TestModeNewBookingActivity" android:label="Accountant-TestMode">
             <intent-filter>
-                <category android:name="android.intent.category.LAUNCHER"></category>
                 <action android:name="android.intent.action.MAIN"></action>
+                <category android:name="android.intent.category.LAUNCHER"></category>
             </intent-filter>
         </activity>
         <activity android:name="TestModeBookingsListActivity">
-            <intent-filter>
-                <category android:name="android.intent.category.LAUNCHER"></category>
-                <action android:name="android.intent.action.MAIN"></action>
-            </intent-filter>
         </activity>
+        
     </application>
 </manifest>

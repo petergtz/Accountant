@@ -8,6 +8,11 @@ public class TestModeNewBookingActivity extends NewBookingActivity {
     
     @Override
     protected Data getData() {
-        return new Data(getApplicationContext(), getExternalFilesDir(null)+"/" +"test-accountant.db");
+        return Data.createForTesting(getApplicationContext(), getExternalFilesDir(null));
+    }
+    
+    @Override
+    protected String getTextChooseActivityName() {
+    	return "p3rg2z.accountant.TextChooseActivity";
     }
 }
