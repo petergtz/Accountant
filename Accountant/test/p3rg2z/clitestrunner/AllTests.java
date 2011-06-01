@@ -6,7 +6,8 @@ import p3rg2z.accountant.*;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-    NewBookingActivityTest.class
+    NewBookingActivityTest.class,
+    DataTest.class
 })
 
 public class AllTests {}
