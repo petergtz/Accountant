@@ -9,13 +9,16 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
+import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Environment;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
@@ -65,9 +68,30 @@ public class NewBookingActivity extends Activity {
         initMembers();
 
         setUpBookingTypeButton();
+        setUpTextInput();
         setUpBookingButton();
         setUpTextChooserButton();
         setUpDateInput();
+    }
+    
+    private void setUpTextInput() {
+        textInput.setOnTouchListener(new OnTouchListener() {
+            public boolean onTouch(View arg0, MotionEvent arg1) {
+                onSearchRequested();
+                return true;
+            }
+        });
+    }
+    
+    @Override
+    protected void onNewIntent(Intent intent) {
+        if (intent.getAction().equals(Intent.ACTION_SEARCH)) {
+            if (intent.getDataString() == null) {
+                textInput.setText(intent.getStringExtra(SearchManager.QUERY));
+            } else {
+                textInput.setText(intent.getDataString());
+            }
+        }
     }
 
     private void initMembers() {
