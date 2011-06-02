@@ -7,8 +7,8 @@ public class TestModeNewBookingActivity extends NewBookingActivity {
     }
     
     @Override
-    protected Data getData() {
-        return Data.createForTesting(getApplicationContext(), getExternalFilesDir(null));
+    protected void createData() {
+        Data.instance().initForTesting(getApplicationContext(), getExternalFilesDir(null));
     }
     
     @Override

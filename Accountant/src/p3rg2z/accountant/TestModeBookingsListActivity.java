@@ -7,10 +7,6 @@ public class TestModeBookingsListActivity extends BookingsListActivity {
         return true;
     }
 
-    @Override
-    protected Data getData() {
-        return Data.createForTesting(getApplicationContext(), getExternalFilesDir(null));
-    }
-    
+   
 
 }

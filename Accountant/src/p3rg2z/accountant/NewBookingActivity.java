@@ -55,6 +55,7 @@ public class NewBookingActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.newbooking);
+        createData();
         if (isInTestMode()) {
             Toast.makeText(getApplicationContext(), "onCreate", Toast.LENGTH_LONG).show(); 
             setTitleColor(0xffff0000);
@@ -109,7 +110,7 @@ public class NewBookingActivity extends Activity {
                 getString(R.string.booking_type_in), 
                 getString(R.string.booking_type_transaction)};
         
-        data = getData();
+        data = Data.instance();
     }
     
     private void setUpBookingTypeButton() {
@@ -241,8 +242,8 @@ public class NewBookingActivity extends Activity {
         Toast.makeText(getApplicationContext(), ""+ requestCode + " " + resultCode + " " + data, Toast.LENGTH_LONG).show();
     }
       
-    protected Data getData() {
-        return Data.create(getApplicationContext(), getExternalFilesDir(null));
+    protected void createData() {
+        Data.instance().init(getApplicationContext(), getExternalFilesDir(null));
     }
     
     protected boolean isInTestMode() {

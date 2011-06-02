@@ -15,10 +15,6 @@ public class BookingsListActivity extends Activity {
         return false;
     }
     
-    protected Data getData() {
-        return Data.create(getApplicationContext(), getExternalFilesDir(null));
-    }
-    
     @Override
     public void onCreate(Bundle savedInstance) {
         super.onCreate(savedInstance);
@@ -28,7 +24,7 @@ public class BookingsListActivity extends Activity {
         lv = (ListView)findViewById(R.id.bookings_list);
         
         lv.setAdapter(new SimpleCursorAdapter(getApplicationContext(), R.layout.bookings_list_entry,
-                getData().queryAllBookings(), new String[] { Tables.Bookings.TEXT }, 
+                Data.instance().queryAllBookings(), new String[] { Tables.Bookings.TEXT }, 
                 new int[] { R.id.bookings_list_entry_text_label }));
 
         if (isInTestMode()) {

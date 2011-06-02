@@ -7,21 +7,38 @@ import java.io.File;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.CursorWrapper;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class Data {
     private SQLiteOpenHelper db;
     
-    public static Data create(Context context, File dir) {
-        return  new Data(context, dir + "/" + "accountant.db");
+    private static Data instance = new Data();
+    
+    public void init(Context context, File dir) {
+        createOpenHelper(context, dir + "/" + "accountant.db");
     }
 
-    public static Data createForTesting(Context context, File dir) {
-        return  new Data(context, dir + "/" + "test-accountant.db");
+    public void initForTesting(Context context, File dir) {
+        createOpenHelper(context, dir + "/" + "test-accountant.db");
+        deleteAllRows();
+        insert("123", "Example text", "VB", "Essen", "heute");
+    }
+    
+    private void deleteAllRows() {
+        db.getWritableDatabase().delete(BOOKINGS, null, null);
+        
     }
 
-    private Data(Context context, String name) {
+    public static Data instance() {
+        return instance;
+    }
+
+    private Data() {
+    }
+    
+    private void createOpenHelper(Context context, String name) {
         db = new SQLiteOpenHelper(context, name, null, 1) {
             
             @Override
@@ -114,6 +131,12 @@ public class Data {
                 new String[] { Accounts._ID, Accounts.NAME }, 
                 Accounts.TYPE + "= ?", new String[] { String.valueOf(type.ordinal()) }, 
                 null, null, null);
+    }
+    
+    public Cursor suggestions() {
+        return db.getReadableDatabase().query(BOOKINGS, 
+                new String[] { Bookings._ID, Bookings.TEXT }, 
+                null, null, null, null, null);
     }
 
 }
