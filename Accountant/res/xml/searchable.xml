@@ -4,5 +4,8 @@
   android:label="@string/app_name"
   android:hint="Search booking text" 
   android:searchSuggestAuthority="p3rg2z.accountant.bookingtextsuggestionprovider"
-  android:searchSuggestIntentAction="android.intent.action.SEARCH">
+  android:searchSuggestIntentAction="android.intent.action.SEARCH"
+  android:searchButtonText="@string/text_enter"
+  android:inputType="textCapWords"
+  >
 </searchable>

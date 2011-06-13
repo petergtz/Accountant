@@ -17,4 +17,7 @@
     <string name="choose">Choose</string>
     <string name="date">Date</string>
     <string name="bookings_list">Bookings List</string>
+    <string name="text_enter">↵</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

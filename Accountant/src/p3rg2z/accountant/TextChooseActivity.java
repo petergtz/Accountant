@@ -25,5 +25,6 @@ public class TextChooseActivity extends Activity {
                 
             }
         });
+        onSearchRequested();
     }
 }
