@@ -2,9 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="p3rg2z.accountant"
       android:versionCode="1"
-      android:versionName="1.0"><application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
+      android:versionName="1.0"><application android:label="@string/app_name" android:debuggable="true" android:icon="@drawable/accountant">
         <activity android:name="NewBookingActivity" android:label="@string/app_name"
-                  android:launchMode="singleTop">
+                  android:launchMode="singleTop" android:theme="@android:style/Theme.Black.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -29,7 +29,7 @@
             </intent-filter>
         </activity>
         <activity android:name="TestModeNewBookingActivity" android:label="Accountant-TestMode"
-                  android:launchMode="singleTop">
+                  android:launchMode="singleTop" android:theme="@android:style/Theme.Black.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"></action>
                 <category android:name="android.intent.category.LAUNCHER"></category>
@@ -41,6 +41,10 @@
                        android:resource="@xml/searchable"/>
         </activity>
         <activity android:name="TestModeBookingsListActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"></action>
+                <category android:name="android.intent.category.LAUNCHER"></category>
+            </intent-filter>
         </activity>
         <provider android:name="BookingTextSuggestionProvider"
                   android:authorities="p3rg2z.accountant.bookingtextsuggestionprovider">

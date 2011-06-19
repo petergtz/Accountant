@@ -1,12 +1,14 @@
 package p3rg2z.accountant;
 
-import java.text.DateFormat;
-import java.text.NumberFormat;
+import static java.lang.String.format;
+import static p3rg2z.accountant.FormatUtil.formatDate;
+import static p3rg2z.accountant.FormatUtil.formatDateAsLocal;
+import static p3rg2z.accountant.FormatUtil.reformatAsLocal;
+import static p3rg2z.accountant.FormatUtil.reformatAsUS;
+import static p3rg2z.accountant.FormatUtil.parseAsUSDate;
+
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
 
 import p3rg2z.accountant.Data.SourceAndDest;
 import p3rg2z.accountant.Tables.AccountType;
@@ -21,6 +23,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.MergeCursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.MotionEvent;
@@ -39,17 +42,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class NewBookingActivity extends Activity {
-    
-    private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance();
-    private static final NumberFormat NUMBER_FORMATTER = NumberFormat.getNumberInstance();
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    
+
     private static final int CHOOSE_TEXT_REQUEST_CODE = 3;
 
     private static final int ADD_SOURCE_DIALOG = 1;
     private static final int DATE_PICKER_DIALOG = 2;
     private static final int ADD_DEST_DIALOG = 3;
 
+    private Button bookingsListButton;
 
     private EditText textInput;
     private Spinner bookingTypeInput;
@@ -63,13 +63,12 @@ public class NewBookingActivity extends Activity {
     private Button textChooserButton;
     private Button dateInput;
     private Calendar cal;
-    private DateFormat dateFormatter;
-    
+
     private SimpleCursorAdapter banksAdapter;
     private SimpleCursorAdapter destCategoriesAdapter;
     private SimpleCursorAdapter incomeSourceAdapter;
     private SimpleCursorAdapter allAccountsAdapter;
-    
+
     BookingModeDependent bookingMode;
 
     private TextView sourceLabel;
@@ -82,16 +81,13 @@ public class NewBookingActivity extends Activity {
     public static enum BookingMode {
         EXPENSE, INCOME, TRANSACTION
     }
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.newbooking);
         createData();
-        if (isInTestMode()) {
-            showToast("onCreate"); 
-            setTitleColor(0xffff0000);
-        }
+        runTestModeOperations();
 
         if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             showToast("SD card not mounted");
@@ -100,15 +96,57 @@ public class NewBookingActivity extends Activity {
 
         initMembers();
 
-        setUpBookingTypeButton();
-        setUpSourceAndDestInput();
+
+        setUpBookingsListButton();
+        setUpBookingTypeInput();
         setUpTextInput();
-        setUpBookingButton();
         setUpTextChooserButton();
+        setUpSourceAndDestItemSelectListener();
         setUpDateInput();
+        if (getIntent().getAction().equals(Intent.ACTION_EDIT)) {
+            String bookingId = Uri.parse(getIntent().getDataString()).getLastPathSegment();
+            Cursor booking = data.bookingFor(bookingId);
+            try {
+                amountInput.setText(reformatAsLocal(Data.amountFrom(booking)));
+            } catch (ParseException e) {
+                amountInput.setText(R.string.error);
+            }
+            int bookingModeIndex = data.bookingTypeFrom(booking).ordinal();
+            bookingTypeInput.setSelection(bookingModeIndex);
+
+            textInput.setText(Data.textFrom(booking));
+            setUpSourceAndDestInputBasedOn(bookingModeIndex);
+            selectTextIn(sourceInput, Data.sourceFrom(booking));
+            selectTextIn(destInput, Data.destFrom(booking));
+
+            try {
+                cal.setTime(parseAsUSDate(Data.dateFrom(booking)));
+                dateInput.setText(formatDateAsLocal(cal.getTime()));
+            } catch (ParseException e) {
+                cal = Calendar.getInstance();
+                dateInput.setText(R.string.error);
+            }
+            setUpSubmitAsApplyChangesButton(bookingId);
+        } else {
+            setUpSubmitAsCreateBookingButton();
+        }
+    }
+
+    private void setUpBookingsListButton() {
+        bookingsListButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                startActivity(new Intent().setComponent(
+                    new ComponentName(getApplicationContext(), bookingsListActivity())));
+            }
+        });
+    }
+
+    protected Class<?> bookingsListActivity() {
+        return BookingsListActivity.class;
     }
 
     private void initMembers() {
+        bookingsListButton = (Button)findViewById(R.id.bookings_list_button);
         amountInput = (EditText)findViewById(R.id.amount);
         textInput = (EditText)findViewById(R.id.text_edit);
         bookingTypeInput = (Spinner)findViewById(R.id.booking_type_spinner);
@@ -120,11 +158,11 @@ public class NewBookingActivity extends Activity {
         textChooserButton = (Button)findViewById(R.id.text_chooser_button);
         dateInput = (Button)findViewById(R.id.date_input);
 
-        BOOKING_MODES = new String[] { 
-                getString(R.string.booking_type_out), 
-                getString(R.string.booking_type_in), 
+        BOOKING_MODES = new String[] {
+                getString(R.string.booking_type_out),
+                getString(R.string.booking_type_in),
                 getString(R.string.booking_type_transaction)};
-        
+
         data = Data.instance();
 
         banksAdapter = createAccountAdapter(AccountType.BANK);
@@ -132,8 +170,8 @@ public class NewBookingActivity extends Activity {
         incomeSourceAdapter = createAccountAdapter(AccountType.INCOME_SOURCE);
         allAccountsAdapter = createAccountAdapter(null);
     }
-    
-    private void setUpSourceAndDestInput() {
+
+    private void setUpSourceAndDestItemSelectListener() {
         class SelectListener implements OnItemSelectedListener {
             int id;
             int oldPosition;
@@ -152,11 +190,11 @@ public class NewBookingActivity extends Activity {
             public void onNothingSelected(AdapterView<?> av) {
                 throw new UnsupportedOperationException();
             }
-        };        
+        };
         sourceInput.setOnItemSelectedListener(new SelectListener(ADD_SOURCE_DIALOG));
         destInput.setOnItemSelectedListener(new SelectListener(ADD_DEST_DIALOG));
     }
-    
+
     private void setUpTextInput() {
         textInput.setOnTouchListener(new OnTouchListener() {
             public boolean onTouch(View arg0, MotionEvent arg1) {
@@ -165,7 +203,7 @@ public class NewBookingActivity extends Activity {
             }
         });
     }
-    
+
     @Override
     protected void onNewIntent(Intent intent) {
         if (intent.getAction().equals(Intent.ACTION_SEARCH)) {
@@ -184,9 +222,9 @@ public class NewBookingActivity extends Activity {
     }
 
     private void adjustSourceAndDestFor(String text) {
-        SourceAndDest sourceAndDest = data.sourceAndDestFor(text);
-        sourceInput.setSelection(positionOf(sourceInput, sourceAndDest.source));
-        destInput.setSelection(positionOf(destInput, sourceAndDest.dest));
+        SourceAndDest sourceAndDest = data.suggestedSourceAndDestFor(text);
+        selectTextIn(sourceInput, sourceAndDest.source);
+        selectTextIn(destInput, sourceAndDest.dest);
     }
 
     private interface BookingModeAndSourceDestDependent {
@@ -194,7 +232,7 @@ public class NewBookingActivity extends Activity {
         void addAccount(String accountName);
         SimpleCursorAdapter adapter();
     }
-    
+
     private class BankSpecific implements BookingModeAndSourceDestDependent {
         public String labelName() { return getString(R.string.bank); }
 
@@ -205,7 +243,7 @@ public class NewBookingActivity extends Activity {
 
         public SimpleCursorAdapter adapter() { return banksAdapter; }
     }
-    
+
     private class DestCategorySpecific implements BookingModeAndSourceDestDependent {
         public String labelName() { return getString(R.string.category); }
 
@@ -215,7 +253,7 @@ public class NewBookingActivity extends Activity {
         }
         public SimpleCursorAdapter adapter() { return destCategoriesAdapter; }
     }
-    
+
     private class IncomeAccountSpecific implements BookingModeAndSourceDestDependent {
         public String labelName() { return getString(R.string.income_source); }
 
@@ -225,25 +263,25 @@ public class NewBookingActivity extends Activity {
         }
         public SimpleCursorAdapter adapter() { return incomeSourceAdapter; }
     }
-    
+
     private class SourceAccountSpecific implements BookingModeAndSourceDestDependent {
         public String labelName() { return getString(R.string.source); }
         public void addAccount(String accountName) { showToast("Internal Error"); }
         public SimpleCursorAdapter adapter() { return allAccountsAdapter; }
     }
-    
+
     private class DestAccountSpecific implements BookingModeAndSourceDestDependent {
         public String labelName() { return getString(R.string.destination); }
         public void addAccount(String accountName) { showToast("Internal Error"); }
         public SimpleCursorAdapter adapter() { return allAccountsAdapter; }
     }
-    
+
     private interface SourceDestDependent {
         BookingModeAndSourceDestDependent combinedWith(ExpenseSpecific expenseSpecific);
         BookingModeAndSourceDestDependent combinedWith(IncomeSpecific incomeSpecific);
         BookingModeAndSourceDestDependent combinedWith(TransactionSpecific transactionSpecific);
     }
-    
+
     private final SourceDestDependent SOURCE = new SourceDestDependent() {
         public BookingModeAndSourceDestDependent combinedWith(ExpenseSpecific expenseSpecific) {
             return new BankSpecific();
@@ -255,7 +293,7 @@ public class NewBookingActivity extends Activity {
             return new SourceAccountSpecific();
         }
     };
-    
+
     private final SourceDestDependent DEST = new SourceDestDependent() {
         public BookingModeAndSourceDestDependent combinedWith(ExpenseSpecific expenseSpecific) {
             return new DestCategorySpecific();
@@ -267,50 +305,38 @@ public class NewBookingActivity extends Activity {
             return new DestAccountSpecific();
         }
     };
-    
+
     private interface BookingModeDependent {
         BookingModeAndSourceDestDependent combinedWith(SourceDestDependent sourceDestDependent);
     }
-    
+
     private class ExpenseSpecific implements BookingModeDependent {
         public BookingModeAndSourceDestDependent combinedWith(SourceDestDependent sourceDestDependent) {
             return sourceDestDependent.combinedWith(this);
         }
     }
-    
+
     private class IncomeSpecific implements BookingModeDependent {
         public BookingModeAndSourceDestDependent combinedWith(SourceDestDependent sourceDestDependent) {
             return sourceDestDependent.combinedWith(this);
         }
     }
-    
+
     private class TransactionSpecific implements BookingModeDependent {
         public BookingModeAndSourceDestDependent combinedWith(SourceDestDependent sourceDestDependent) {
             return sourceDestDependent.combinedWith(this);
         }
     }
-    
-    private void setUpBookingTypeButton() {
-        ArrayAdapter<CharSequence> bookingTypeAdapter = new ArrayAdapter<CharSequence>(this, 
+
+    private void setUpBookingTypeInput() {
+        ArrayAdapter<CharSequence> bookingTypeAdapter = new ArrayAdapter<CharSequence>(this,
                 android.R.layout.simple_spinner_item, BOOKING_MODES);
         bookingTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        
+
         bookingTypeInput.setOnItemSelectedListener(new OnItemSelectedListener() {
 
             public void onItemSelected(AdapterView<?> av, View v, int index, long l) {
-                if (index == BookingMode.EXPENSE.ordinal()) {
-                    bookingMode = new ExpenseSpecific();
-                } else if (index == BookingMode.INCOME.ordinal()) {
-                    bookingMode = new IncomeSpecific();
-                } else if (index == BookingMode.TRANSACTION.ordinal()) {
-                    bookingMode = new TransactionSpecific();
-                } else {
-                    throw new UnsupportedOperationException();
-                }
-                sourceLabel.setText(bookingMode.combinedWith(SOURCE).labelName());
-                destLabel.setText(bookingMode.combinedWith(DEST).labelName());
-                sourceInput.setAdapter(bookingMode.combinedWith(SOURCE).adapter());
-                destInput.setAdapter(bookingMode.combinedWith(DEST).adapter());
+                setUpSourceAndDestInputBasedOn(index);
             }
 
             public void onNothingSelected(AdapterView<?> paramAdapterView) {
@@ -324,76 +350,87 @@ public class NewBookingActivity extends Activity {
     private SimpleCursorAdapter createAccountAdapter(AccountType type) {
         SimpleCursorAdapter result;
         if (type == null) {
-            result = new SimpleCursorAdapter(this, R.layout.accountlistitem, 
-                    data.queryAllAccounts(),
+            result = new SimpleCursorAdapter(this, R.layout.accountlistitem,
+                    data.allAccounts(),
                     new String[] { Accounts.NAME }, new int[] { R.id.account_name });
         } else {
-            result = new SimpleCursorAdapter(this, R.layout.accountlistitem, 
-                    new MergeCursor(new Cursor[] {data.queryType(type), ADDITION_ENTRY}),
+            result = new SimpleCursorAdapter(this, R.layout.accountlistitem,
+                    new MergeCursor(new Cursor[] {data.allAccountsOf(type), ADDITION_ENTRY}),
                     new String[] { Accounts.NAME }, new int[] { R.id.account_name });
         }
         result.setDropDownViewResource(R.layout.accountdropdownitem);
 
         return result;
     }
-    
-    private void setUpBookingButton() {
+
+    private void setUpSubmitAsCreateBookingButton() {
+        createBookingButton.setText("Create Booking");
         createBookingButton.setOnClickListener(new OnClickListener() {
             public void onClick(View paramView) {
                 try {
-                    String formattedAmount = formatAmount(amountInput.getText().toString());
-                    data.insert(formattedAmount, 
+                    String formattedAmount = reformatAsUS(amountInput.getText().toString());
+                    data.addNewBooking(formattedAmount,
                             textInput.getText().toString(),
-                            ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX), 
+                            ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
                             ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
                             formatDate(cal.getTime()));
 
-                    showToast(String.format("Saved new booking \"%s\": %s", 
+                    showToast(format("Saved new booking \"%s\": %s",
                             textInput.getText().toString(), formattedAmount));
+
+                    textInput.setText("");
+                    amountInput.setText("");
                 } catch (ParseException e) {
                     showToast("INVALID");
                 }
             }
         });
     }
-    
-    private static String formatDate(Date date) {
-        return DATE_FORMATTER.format(date);
-    }
 
-    private static String formatAmount(String amount) throws ParseException {
-        Number number = NUMBER_FORMATTER.parse(amount);
-        String currencyString = CURRENCY_FORMATTER.format(number);
-        Number currencyNumber = CURRENCY_FORMATTER.parse(currencyString);
-        if (currencyNumber instanceof Long) {
-            return String.format(Locale.US, "%d.00", currencyNumber);
-        } else {
-            return String.format(Locale.US, "%10.2f", currencyNumber);
-        }
+    private void setUpSubmitAsApplyChangesButton(final String id) {
+        createBookingButton.setText("Apply Changes");
+        createBookingButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View paramView) {
+                try {
+                    String formattedAmount = reformatAsUS(amountInput.getText().toString());
+                    data.updateBooking(id, formattedAmount,
+                            textInput.getText().toString(),
+                            ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
+                            ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
+                            formatDate(cal.getTime()));
+
+                    showToast(format("Saved changes in booking \"%s\": %s",
+                            textInput.getText().toString(), formattedAmount));
+
+                    finish();
+                } catch (ParseException e) {
+                    showToast("INVALID");
+                }
+            }
+        });
     }
 
     private void setUpTextChooserButton() {
         textChooserButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 startActivityForResult(new Intent().
-                    setComponent(new ComponentName("p3rg2z.accountant", getTextChooseActivityName())), 
+                    setComponent(new ComponentName("p3rg2z.accountant", getTextChooseActivityName())),
                     CHOOSE_TEXT_REQUEST_CODE);
             }
         });
     }
 
 
-    void setUpDateInput() {
-        dateFormatter = DateFormat.getDateInstance(DateFormat.LONG);
+    private void setUpDateInput() {
         cal = Calendar.getInstance();
-        dateInput.setText(dateFormatter.format(cal.getTime()));
+        dateInput.setText(formatDateAsLocal(cal.getTime()));
         dateInput.setOnClickListener(new OnClickListener() {
             public void onClick(View view) {
                 showDialog(DATE_PICKER_DIALOG);
             }
         });
     }
-    
+
     @Override
     protected Dialog onCreateDialog(int id) {
         switch (id) {
@@ -414,9 +451,9 @@ public class NewBookingActivity extends Activity {
                 cal.set(Calendar.YEAR, year);
                 cal.set(Calendar.MONTH, month);
                 cal.set(Calendar.DAY_OF_MONTH, day);
-                dateInput.setText(dateFormatter.format(cal.getTime()));
+                dateInput.setText(formatDateAsLocal(cal.getTime()));
             }
-        }, 
+        },
         cal.get(Calendar.YEAR),
         cal.get(Calendar.MONTH),
         cal.get(Calendar.DAY_OF_MONTH));
@@ -432,16 +469,16 @@ public class NewBookingActivity extends Activity {
 
         dialog.setTitle("New " + modeDependent.labelName());
         accountNameInput.setHint(modeDependent.labelName() + " name");
-        
+
         okButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 String accountName = accountNameInput.getText().toString();
-                if (data.hasAccount(accountName)) {
+                if (data.accountExists(accountName)) {
                     showToast("An account with this name exists already.");
                 } else {
                     modeDependent.addAccount(accountName);
                 }
-                input.setSelection(positionOf(input, accountName));
+                selectTextIn(input, accountName);
                 dialog.dismiss();
             }
         });
@@ -456,14 +493,14 @@ public class NewBookingActivity extends Activity {
     @Override
     public boolean onSearchRequested () {
         try {
-            Data.setAmountForSuggestions(formatAmount(amountInput.getText().toString()));
+            Data.setAmountForSuggestions(reformatAsUS(amountInput.getText().toString()));
         } catch (ParseException e) {
             Data.setAmountForSuggestions("");
         }
         startSearch(textInput.getText().toString(), true, null, false);
         return true;
     }
-    
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -472,17 +509,19 @@ public class NewBookingActivity extends Activity {
         }
         showToast(""+ requestCode + " " + resultCode + " " + data);
     }
-      
+
     protected void createData() {
         Data.instance().init(getApplicationContext(), getExternalFilesDir(null));
     }
-    
-    protected boolean isInTestMode() {
-        return false; 
-    }
-    
+
+    protected void runTestModeOperations() {}
+
     protected String getTextChooseActivityName() {
     	return "p3rg2z.accountant.TextChooseActivity";
+    }
+
+    private static void selectTextIn(Spinner spinner, String text) {
+        spinner.setSelection(positionOf(spinner, text));
     }
 
     private static int positionOf(Spinner spinner, String text) {
@@ -498,6 +537,22 @@ public class NewBookingActivity extends Activity {
 
     private void showToast(String text) {
         Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+    }
+
+    private void setUpSourceAndDestInputBasedOn(int bookingModeIndex) {
+        if (bookingModeIndex == BookingMode.EXPENSE.ordinal()) {
+            bookingMode = new ExpenseSpecific();
+        } else if (bookingModeIndex == BookingMode.INCOME.ordinal()) {
+            bookingMode = new IncomeSpecific();
+        } else if (bookingModeIndex == BookingMode.TRANSACTION.ordinal()) {
+            bookingMode = new TransactionSpecific();
+        } else {
+            throw new UnsupportedOperationException();
+        }
+        sourceLabel.setText(bookingMode.combinedWith(SOURCE).labelName());
+        destLabel.setText(bookingMode.combinedWith(DEST).labelName());
+        sourceInput.setAdapter(bookingMode.combinedWith(SOURCE).adapter());
+        destInput.setAdapter(bookingMode.combinedWith(DEST).adapter());
     }
 
 }

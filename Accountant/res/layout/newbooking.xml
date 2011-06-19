@@ -2,8 +2,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" android:scrollbars="vertical">
-    <Button android:id="@+id/button1" android:text="@string/bookings_list" android:layout_width="wrap_content" android:layout_height="30dip"></Button>
+    android:layout_height="fill_parent" android:scrollbars="vertical"
+    >
+    <LinearLayout
+        android:id="@+id/top_bar"
+        
+        android:background="@android:color/background_dark" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="2dp">
+        <Button android:id="@+id/bookings_list_button" android:layout_width="wrap_content" android:background="@drawable/list_button" android:layout_height="35dp"></Button>
+    </LinearLayout>
     <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Amount" android:id="@+id/amount_label"></TextView>
     <LinearLayout android:layout_height="wrap_content" android:id="@+id/linearLayout1" android:layout_width="match_parent">
         <EditText android:numeric="decimal" android:layout_height="wrap_content" android:hint="@string/amount" android:layout_width="wrap_content" android:id="@+id/amount" android:inputType="phone|numberDecimal"></EditText>

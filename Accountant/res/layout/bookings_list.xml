@@ -3,5 +3,6 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:layout_width="match_parent"
   android:layout_height="match_parent" android:orientation="vertical">
+    <Button android:layout_width="wrap_content" android:layout_gravity="right" android:layout_height="wrap_content" android:id="@+id/new_booking_button" android:text="@string/new_booking"></Button>
     <ListView android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/bookings_list"></ListView>
 </LinearLayout>

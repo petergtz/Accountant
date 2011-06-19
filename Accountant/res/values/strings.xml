@@ -20,4 +20,8 @@
     <string name="text_enter">↵</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="from">From: </string>
+    <string name="to">→</string>
+    <string name="new_booking">New Booking</string>
+    <string name="error">Error</string>
 </resources>

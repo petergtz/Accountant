@@ -12,15 +12,15 @@ public class BookingTextSuggestionProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        Data.instance().init(this.getContext(), this.getContext().getExternalFilesDir(null));
+//        Data.instance().init(this.getContext(), this.getContext().getExternalFilesDir(null));
         return true;
     }
-    
+
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
             String[] selectionArgs, String sortOrder) {
         String searchString = uri.getPath().replace("/" + SearchManager.SUGGEST_URI_PATH_QUERY + "/", "");
-        final Cursor c = Data.instance().suggestionsFor(searchString);
+        final Cursor c = Data.instance().textSuggestionsFor(searchString);
         return new CursorWrapper(c) {
             @Override
             public int getColumnIndex(String columnName) {
@@ -33,7 +33,7 @@ public class BookingTextSuggestionProvider extends ContentProvider {
                 }
                 return -1;
             }
-            
+
 //            @Override
 //            public String getString(int columnIndex) {
 //                if (columnIndex == 1234) {
