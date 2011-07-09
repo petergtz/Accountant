@@ -1,14 +1,13 @@
 package p3rg2z.accountant;
 
-import static java.lang.String.format;
-import static p3rg2z.accountant.FormatUtil.formatDate;
-import static p3rg2z.accountant.FormatUtil.formatDateAsLocal;
-import static p3rg2z.accountant.FormatUtil.reformatAsLocal;
-import static p3rg2z.accountant.FormatUtil.reformatAsUS;
-import static p3rg2z.accountant.FormatUtil.parseAsUSDate;
+import static android.widget.Toast.LENGTH_LONG;
+import static p3rg2z.accountant.Data.*;
+import static p3rg2z.accountant.FormatUtil.*;
 
 import java.text.ParseException;
 import java.util.Calendar;
+import java.util.Currency;
+import java.util.Locale;
 
 import p3rg2z.accountant.Data.SourceAndDest;
 import p3rg2z.accountant.Tables.AccountType;
@@ -17,7 +16,6 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
-import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.database.Cursor;
@@ -26,6 +24,8 @@ import android.database.MergeCursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -43,26 +43,26 @@ import android.widget.Toast;
 
 public class NewBookingActivity extends Activity {
 
-    private static final int CHOOSE_TEXT_REQUEST_CODE = 3;
-
     private static final int ADD_SOURCE_DIALOG = 1;
     private static final int DATE_PICKER_DIALOG = 2;
     private static final int ADD_DEST_DIALOG = 3;
 
     private Button bookingsListButton;
-
+    private TextView title;
+    private Button submitButton;
+    private TextView currencySymbol;
+    private EditText amountInput;
     private EditText textInput;
     private Spinner bookingTypeInput;
+    private TextView sourceLabel;
     private Spinner sourceInput;
+    private TextView destLabel;
     private Spinner destInput;
-    private Button createBookingButton;
-    private EditText amountInput;
+    private Button dateInput;
+    private Calendar cal;
 
     String[] BOOKING_MODES;
     private Data data;
-    private Button textChooserButton;
-    private Button dateInput;
-    private Calendar cal;
 
     private SimpleCursorAdapter banksAdapter;
     private SimpleCursorAdapter destCategoriesAdapter;
@@ -71,12 +71,7 @@ public class NewBookingActivity extends Activity {
 
     BookingModeDependent bookingMode;
 
-    private TextView sourceLabel;
-    private TextView destLabel;
-    private static final MatrixCursor ADDITION_ENTRY = new MatrixCursor(new String[] { Accounts._ID, Accounts.NAME });
-    static {
-        ADDITION_ENTRY.addRow(new Object[] {-1, "Add new ..." });
-    }
+    private MatrixCursor addNewAccountEntry = new MatrixCursor(new String[] { Accounts._ID, Accounts.NAME });
 
     public static enum BookingMode {
         EXPENSE, INCOME, TRANSACTION
@@ -85,51 +80,62 @@ public class NewBookingActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.newbooking);
-        createData();
-        runTestModeOperations();
 
         if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            showToast("SD card not mounted");
+            showLongToast(R.string.sd_card_not_mounted);
             return;
         }
 
+        setContentView(R.layout.newbooking);
+
+        createData();
+        runTestModeOperations();
+
         initMembers();
 
-
         setUpBookingsListButton();
+        setUpCurrencySymbol();
         setUpBookingTypeInput();
         setUpTextInput();
-        setUpTextChooserButton();
         setUpSourceAndDestItemSelectListener();
         setUpDateInput();
         if (getIntent().getAction().equals(Intent.ACTION_EDIT)) {
-            String bookingId = Uri.parse(getIntent().getDataString()).getLastPathSegment();
-            Cursor booking = data.bookingFor(bookingId);
-            try {
-                amountInput.setText(reformatAsLocal(Data.amountFrom(booking)));
-            } catch (ParseException e) {
-                amountInput.setText(R.string.error);
-            }
-            int bookingModeIndex = data.bookingTypeFrom(booking).ordinal();
-            bookingTypeInput.setSelection(bookingModeIndex);
-
-            textInput.setText(Data.textFrom(booking));
-            setUpSourceAndDestInputBasedOn(bookingModeIndex);
-            selectTextIn(sourceInput, Data.sourceFrom(booking));
-            selectTextIn(destInput, Data.destFrom(booking));
-
-            try {
-                cal.setTime(parseAsUSDate(Data.dateFrom(booking)));
-                dateInput.setText(formatDateAsLocal(cal.getTime()));
-            } catch (ParseException e) {
-                cal = Calendar.getInstance();
-                dateInput.setText(R.string.error);
-            }
+            String bookingId = bookingIdFrom(getIntent());
+            preFillInputs(data.bookingFor(bookingId));
             setUpSubmitAsApplyChangesButton(bookingId);
         } else {
             setUpSubmitAsCreateBookingButton();
         }
+    }
+
+    private void initMembers() {
+        bookingsListButton = (Button)findViewById(R.id.bookings_list_button);
+        title = (TextView)findViewById(R.id.title);
+        currencySymbol = (TextView)findViewById(R.id.currency);
+        amountInput = (EditText)findViewById(R.id.amount);
+        textInput = (EditText)findViewById(R.id.text_edit);
+        bookingTypeInput = (Spinner)findViewById(R.id.booking_type_spinner);
+        sourceLabel = (TextView) findViewById(R.id.source_label);
+        sourceInput = (Spinner) findViewById(R.id.source_spinner);
+        destLabel = (TextView) findViewById(R.id.dest_label);
+        destInput = (Spinner) findViewById(R.id.dest_spinner);
+        submitButton = (Button)findViewById(R.id.create_booking_button);
+        dateInput = (Button)findViewById(R.id.date_input);
+
+        BOOKING_MODES = new String[] {
+                getString(R.string.booking_type_out),
+                getString(R.string.booking_type_in),
+                getString(R.string.booking_type_transaction)};
+
+        data = Data.instance();
+
+        addNewAccountEntry = new MatrixCursor(new String[] { Accounts._ID, Accounts.NAME });
+        addNewAccountEntry.addRow(new Object[] {-1, getString(R.string.add_new) });
+
+        banksAdapter = createAccountAdapter(AccountType.BANK);
+        destCategoriesAdapter = createAccountAdapter(AccountType.DEST_CATEGORY);
+        incomeSourceAdapter = createAccountAdapter(AccountType.INCOME_SOURCE);
+        allAccountsAdapter = createAccountAdapter(null);
     }
 
     private void setUpBookingsListButton() {
@@ -145,30 +151,8 @@ public class NewBookingActivity extends Activity {
         return BookingsListActivity.class;
     }
 
-    private void initMembers() {
-        bookingsListButton = (Button)findViewById(R.id.bookings_list_button);
-        amountInput = (EditText)findViewById(R.id.amount);
-        textInput = (EditText)findViewById(R.id.text_edit);
-        bookingTypeInput = (Spinner)findViewById(R.id.booking_type_spinner);
-        sourceLabel = (TextView) findViewById(R.id.source_label);
-        sourceInput = (Spinner) findViewById(R.id.source_spinner);
-        destLabel = (TextView) findViewById(R.id.dest_label);
-        destInput = (Spinner) findViewById(R.id.dest_spinner);
-        createBookingButton = (Button)findViewById(R.id.create_booking_button);
-        textChooserButton = (Button)findViewById(R.id.text_chooser_button);
-        dateInput = (Button)findViewById(R.id.date_input);
-
-        BOOKING_MODES = new String[] {
-                getString(R.string.booking_type_out),
-                getString(R.string.booking_type_in),
-                getString(R.string.booking_type_transaction)};
-
-        data = Data.instance();
-
-        banksAdapter = createAccountAdapter(AccountType.BANK);
-        destCategoriesAdapter = createAccountAdapter(AccountType.DEST_CATEGORY);
-        incomeSourceAdapter = createAccountAdapter(AccountType.INCOME_SOURCE);
-        allAccountsAdapter = createAccountAdapter(null);
+    private void setUpCurrencySymbol() {
+        currencySymbol.setText(Currency.getInstance(Locale.getDefault()).getCurrencyCode() +" ");
     }
 
     private void setUpSourceAndDestItemSelectListener() {
@@ -198,27 +182,15 @@ public class NewBookingActivity extends Activity {
     private void setUpTextInput() {
         textInput.setOnTouchListener(new OnTouchListener() {
             public boolean onTouch(View arg0, MotionEvent arg1) {
-                onSearchRequested();
+                startActivityForResult(
+                        new Intent().
+                            setComponent(new ComponentName(getApplicationContext(), textChooseActivity())).
+                            putExtra("amount", amountInput.getText().toString()).
+                            putExtra("text", textInput.getText().toString()),
+                        TextChooseActivity.CHOOSE_TEXT);
                 return true;
             }
         });
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        if (intent.getAction().equals(Intent.ACTION_SEARCH)) {
-            String text = textFrom(intent);
-            textInput.setText(text);
-            adjustSourceAndDestFor(text);
-        }
-    }
-
-    private static String textFrom(Intent intent) {
-        if (intent.getDataString() == null) {
-            return intent.getStringExtra(SearchManager.QUERY);
-        } else {
-            return intent.getDataString();
-        }
     }
 
     private void adjustSourceAndDestFor(String text) {
@@ -266,13 +238,13 @@ public class NewBookingActivity extends Activity {
 
     private class SourceAccountSpecific implements BookingModeAndSourceDestDependent {
         public String labelName() { return getString(R.string.source); }
-        public void addAccount(String accountName) { showToast("Internal Error"); }
+        public void addAccount(String accountName) { showLongToast(R.string.internal_error); }
         public SimpleCursorAdapter adapter() { return allAccountsAdapter; }
     }
 
     private class DestAccountSpecific implements BookingModeAndSourceDestDependent {
         public String labelName() { return getString(R.string.destination); }
-        public void addAccount(String accountName) { showToast("Internal Error"); }
+        public void addAccount(String accountName) { showLongToast(R.string.internal_error); }
         public SimpleCursorAdapter adapter() { return allAccountsAdapter; }
     }
 
@@ -355,7 +327,7 @@ public class NewBookingActivity extends Activity {
                     new String[] { Accounts.NAME }, new int[] { R.id.account_name });
         } else {
             result = new SimpleCursorAdapter(this, R.layout.accountlistitem,
-                    new MergeCursor(new Cursor[] {data.allAccountsOf(type), ADDITION_ENTRY}),
+                    new MergeCursor(new Cursor[] {data.allAccountsOf(type), addNewAccountEntry}),
                     new String[] { Accounts.NAME }, new int[] { R.id.account_name });
         }
         result.setDropDownViewResource(R.layout.accountdropdownitem);
@@ -364,66 +336,92 @@ public class NewBookingActivity extends Activity {
     }
 
     private void setUpSubmitAsCreateBookingButton() {
-        createBookingButton.setText("Create Booking");
-        createBookingButton.setOnClickListener(new OnClickListener() {
+        submitButton.setText(R.string.create);
+        submitButton.setOnClickListener(new OnClickListener() {
             public void onClick(View paramView) {
                 try {
-                    String formattedAmount = reformatAsUS(amountInput.getText().toString());
+                    String formattedAmount = reformatNumberAsISO(amountInput.getText().toString());
                     data.addNewBooking(formattedAmount,
                             textInput.getText().toString(),
                             ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
                             ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
-                            formatDate(cal.getTime()));
+                            formatAsISO(cal.getTime()));
 
-                    showToast(format("Saved new booking \"%s\": %s",
-                            textInput.getText().toString(), formattedAmount));
+                    showLongToast(R.string.created_new_booking,
+                            textInput.getText().toString(),
+                            reformatNumberAsLocalCurrency(formattedAmount),
+                            ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
+                            ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX));
 
                     textInput.setText("");
                     amountInput.setText("");
                 } catch (ParseException e) {
-                    showToast("INVALID");
+                    showLongToast(R.string.invalid_booking);
                 }
             }
         });
     }
 
+    private static String bookingIdFrom(Intent intent) {
+        return Uri.parse(intent.getDataString()).getLastPathSegment();
+    }
+
+    private void preFillInputs(Cursor booking) {
+        title.setText(R.string.booking);
+        try {
+            amountInput.setText(reformatNumberAsLocal(amountFrom(booking)));
+        } catch (ParseException e) {
+            amountInput.setText(R.string.error);
+        }
+        int bookingModeIndex = data.bookingTypeFrom(booking).ordinal();
+        bookingTypeInput.setSelection(bookingModeIndex);
+
+        textInput.setText(textFrom(booking));
+        setUpSourceAndDestInputBasedOn(bookingModeIndex);
+        selectTextIn(sourceInput, sourceFrom(booking));
+        selectTextIn(destInput, destFrom(booking));
+
+        try {
+            cal.setTime(parseAsISODate(dateFrom(booking)));
+            dateInput.setText(formatAsLocal(cal.getTime()));
+        } catch (ParseException e) {
+            cal = Calendar.getInstance();
+            dateInput.setText(R.string.error);
+        }
+    }
+
     private void setUpSubmitAsApplyChangesButton(final String id) {
-        createBookingButton.setText("Apply Changes");
-        createBookingButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View paramView) {
+        submitButton.setText(R.string.change);
+        submitButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
                 try {
-                    String formattedAmount = reformatAsUS(amountInput.getText().toString());
+                    String formattedAmount = reformatNumberAsISO(amountInput.getText().toString());
                     data.updateBooking(id, formattedAmount,
                             textInput.getText().toString(),
                             ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
                             ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
-                            formatDate(cal.getTime()));
+                            formatAsISO(cal.getTime()));
 
-                    showToast(format("Saved changes in booking \"%s\": %s",
-                            textInput.getText().toString(), formattedAmount));
-
+                    showLongToast(R.string.saved_changes_in_booking,
+                            textInput.getText().toString(),
+                            reformatNumberAsLocalCurrency(formattedAmount),
+                            ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
+                            ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX));
                     finish();
                 } catch (ParseException e) {
-                    showToast("INVALID");
+                    showLongToast(R.string.invalid_booking);
                 }
             }
         });
     }
 
-    private void setUpTextChooserButton() {
-        textChooserButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                startActivityForResult(new Intent().
-                    setComponent(new ComponentName("p3rg2z.accountant", getTextChooseActivityName())),
-                    CHOOSE_TEXT_REQUEST_CODE);
-            }
-        });
+    private Class<?> textChooseActivity() {
+        return TextChooseActivity.class;
     }
-
 
     private void setUpDateInput() {
         cal = Calendar.getInstance();
-        dateInput.setText(formatDateAsLocal(cal.getTime()));
+        dateInput.setText(formatAsLocal(cal.getTime()));
         dateInput.setOnClickListener(new OnClickListener() {
             public void onClick(View view) {
                 showDialog(DATE_PICKER_DIALOG);
@@ -447,16 +445,16 @@ public class NewBookingActivity extends Activity {
 
     private Dialog createDatePickerDialog() {
         return new DatePickerDialog(this, new OnDateSetListener() {
-            public void onDateSet(DatePicker picker, int year, int month, int day) {
-                cal.set(Calendar.YEAR, year);
-                cal.set(Calendar.MONTH, month);
-                cal.set(Calendar.DAY_OF_MONTH, day);
-                dateInput.setText(formatDateAsLocal(cal.getTime()));
-            }
-        },
-        cal.get(Calendar.YEAR),
-        cal.get(Calendar.MONTH),
-        cal.get(Calendar.DAY_OF_MONTH));
+                public void onDateSet(DatePicker picker, int year, int month, int day) {
+                    cal.set(Calendar.YEAR, year);
+                    cal.set(Calendar.MONTH, month);
+                    cal.set(Calendar.DAY_OF_MONTH, day);
+                    dateInput.setText(formatAsLocal(cal.getTime()));
+                }
+            },
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH),
+            cal.get(Calendar.DAY_OF_MONTH));
     }
 
     private Dialog createAddAccountDialog(final BookingModeAndSourceDestDependent modeDependent, final Spinner input) {
@@ -474,7 +472,7 @@ public class NewBookingActivity extends Activity {
             public void onClick(View v) {
                 String accountName = accountNameInput.getText().toString();
                 if (data.accountExists(accountName)) {
-                    showToast("An account with this name exists already.");
+                    showLongToast(R.string.an_account_with_this_name_exists_already);
                 } else {
                     modeDependent.addAccount(accountName);
                 }
@@ -491,23 +489,15 @@ public class NewBookingActivity extends Activity {
     }
 
     @Override
-    public boolean onSearchRequested () {
-        try {
-            Data.setAmountForSuggestions(reformatAsUS(amountInput.getText().toString()));
-        } catch (ParseException e) {
-            Data.setAmountForSuggestions("");
-        }
-        startSearch(textInput.getText().toString(), true, null, false);
-        return true;
-    }
-
-    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (data != null) {
-            textInput.setText(data.getAction());
+        if (requestCode == TextChooseActivity.CHOOSE_TEXT &&
+             resultCode == TextChooseActivity.CHOOSE_TEXT_RESULT) {
+            if (data != null) {
+                textInput.setText(data.getStringExtra("text"));
+                adjustSourceAndDestFor(data.getStringExtra("text"));
+            }
         }
-        showToast(""+ requestCode + " " + resultCode + " " + data);
     }
 
     protected void createData() {
@@ -515,10 +505,6 @@ public class NewBookingActivity extends Activity {
     }
 
     protected void runTestModeOperations() {}
-
-    protected String getTextChooseActivityName() {
-    	return "p3rg2z.accountant.TextChooseActivity";
-    }
 
     private static void selectTextIn(Spinner spinner, String text) {
         spinner.setSelection(positionOf(spinner, text));
@@ -535,8 +521,8 @@ public class NewBookingActivity extends Activity {
         return 0;
     }
 
-    private void showToast(String text) {
-        Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+    private void showLongToast(int stringId, Object... formatArgs) {
+        Toast.makeText(this, getString(stringId, formatArgs), LENGTH_LONG).show();
     }
 
     private void setUpSourceAndDestInputBasedOn(int bookingModeIndex) {
@@ -553,6 +539,28 @@ public class NewBookingActivity extends Activity {
         destLabel.setText(bookingMode.combinedWith(DEST).labelName());
         sourceInput.setAdapter(bookingMode.combinedWith(SOURCE).adapter());
         destInput.setAdapter(bookingMode.combinedWith(DEST).adapter());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.booking_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.import_csv:
+            goToImportMode();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void goToImportMode() {
+        // TODO Auto-generated method stub
+
     }
 
 }

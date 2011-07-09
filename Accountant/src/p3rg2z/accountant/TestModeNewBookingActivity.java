@@ -15,11 +15,6 @@ public class TestModeNewBookingActivity extends NewBookingActivity {
     }
 
     @Override
-    protected String getTextChooseActivityName() {
-    	return "p3rg2z.accountant.TextChooseActivity";
-    }
-
-    @Override
     protected Class<?> bookingsListActivity() {
         return TestModeBookingsListActivity.class;
     }

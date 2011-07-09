@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, NewBookingActivity!</string>
+    <string name="app_name">Accountant</string>
+    <string name="create_new_booking">Neue Buchung erstellen</string>
+    <string name="amount">Betrag</string>
+    <string name="booking_type_in">Einnahme</string>
+    <string name="booking_type_out">Ausgabe</string>
+    <string name="booking_type_transaction">Überweisung</string>
+    <string name="text">Text</string>
+    <string name="bank">Bank</string>
+    <string name="category">Kategorie</string>
+    <string name="income_source">Einnahmequelle</string>
+    <string name="source">Von</string>
+    <string name="destination">Nach</string>
+    <color name="red">#FF0000</color>
+    <string name="choose">Wählen</string>
+    <string name="date">Datum</string>
+    <string name="bookings_list">Buchungen</string>
+    <string name="text_enter">↵</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="to">→</string>
+    <string name="new_booking">Neue Buchung</string>
+    <string name="error">Fehler</string>
+    <string name="booking_text">Buchungstext</string>
+    <string name="change">Ändern</string>
+    <string name="saved_changes_in_booking">Änderungen in Buchung &quot;%1$s&quot;, %2$s \n%3$s → %4$s gespeichert</string>
+    <string name="created_new_booking">Buchung erstellt: &quot;%1$s&quot;, %2$s\n%3$s → %4$s</string>
+    <string name="sd_card_not_mounted">SD Karte nicht eingehängt</string>
+    <string name="invalid_booking">Ungültige Buchung</string>
+    <string name="an_account_with_this_name_exists_already">Ein Konto mit diesem Namen existiert bereits.</string>
+    <string name="add_new">Hinzufügen...</string>
+    <string name="create">Erstellen</string>
+    <string name="overview">Übersicht</string>
+    <string name="bookings_overview">Buchungsübersicht</string>
+    <string name="booking">Buchung</string>
+    <string name="internal_error">Interner Fehler</string>
+</resources>

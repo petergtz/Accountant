@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.database.CursorWrapper;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -25,6 +26,7 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 public class BookingsListActivity extends Activity {
     private Button newBookingButton;
@@ -35,6 +37,11 @@ public class BookingsListActivity extends Activity {
     public void onCreate(Bundle savedInstance) {
         super.onCreate(savedInstance);
         setContentView(R.layout.bookings_list);
+
+        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            Toast.makeText(this, "SD card not mounted", Toast.LENGTH_LONG);
+            return;
+        }
 
         createData();
 
@@ -53,6 +60,12 @@ public class BookingsListActivity extends Activity {
                 if (columnIndex == getColumnIndex(Bookings.AMOUNT)) {
                     try {
                         return formatAsLocalCurrency(NumberFormat.getNumberInstance(Locale.US).parse(result));
+                    } catch (ParseException e) {
+                        return "Invalid";
+                    }
+                } else if (columnIndex == getColumnIndex(Bookings.DATE)) {
+                    try {
+                        return FormatUtil.reformatAsLocalDateTime(result);
                     } catch (ParseException e) {
                         return "Invalid";
                     }

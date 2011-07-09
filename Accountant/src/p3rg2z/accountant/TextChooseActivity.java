@@ -1,30 +1,59 @@
 package p3rg2z.accountant;
 
+import static p3rg2z.accountant.FormatUtil.reformatNumberAsISO;
+
+import java.text.ParseException;
+
 import android.app.Activity;
+import android.app.SearchManager;
+import android.app.SearchManager.OnCancelListener;
+import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
 
 public class TextChooseActivity extends Activity {
+    public static final int CHOOSE_TEXT = 0;
+    public static final int CHOOSE_TEXT_RESULT = 0;
+
     @Override
     public void onCreate(Bundle savedInstance) {
         super.onCreate(savedInstance);
-        
         setContentView(R.layout.textchooser);
-        
-        Button b = (Button)findViewById(R.id.button1);
-        b.setOnClickListener(new OnClickListener() {
-            
-            @Override
-            public void onClick(View paramView) {
-                setResult(666, new Intent("AAA"));
+
+        ((SearchManager)getSystemService(Context.SEARCH_SERVICE)).setOnCancelListener(new OnCancelListener() {
+            public void onCancel() {
                 finish();
-                
             }
         });
         onSearchRequested();
     }
+
+    @Override
+    public boolean onSearchRequested () {
+        try {
+            Data.setAmountForSuggestions(reformatNumberAsISO(getIntent().getStringExtra("amount")));
+        } catch (ParseException e) {
+            Data.setAmountForSuggestions("");
+        }
+        startSearch(getIntent().getStringExtra("text"), true, null, false);
+        return true;
+    }
+
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        if (intent.getAction().equals(Intent.ACTION_SEARCH)) {
+            setResult(0, new Intent().putExtra("text", textFrom(intent)));
+            finish();
+        }
+    }
+
+    private static String textFrom(Intent intent) {
+        if (intent.getDataString() == null) {
+            return intent.getStringExtra(SearchManager.QUERY);
+        } else {
+            return intent.getDataString();
+        }
+    }
+
 }

@@ -2,7 +2,7 @@
 <resources>
     <string name="hello">Hello World, NewBookingActivity!</string>
     <string name="app_name">Accountant</string>
-    <string name="create_booking">Create Booking</string>
+    <string name="create_new_booking">Create New Booking</string>
     <string name="amount">Amount</string>
     <string name="booking_type_in">Income</string>
     <string name="booking_type_out">Expense</string>
@@ -20,8 +20,21 @@
     <string name="text_enter">↵</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="from">From: </string>
     <string name="to">→</string>
     <string name="new_booking">New Booking</string>
     <string name="error">Error</string>
+    <string name="booking_text">Booking Text</string>
+    <string name="change">Change</string>
+    <string name="saved_changes_in_booking">Saved changes in booking &quot;%1$s&quot;, %2$s\n%3$s → %4$s</string>
+    <string name="created_new_booking">Created new booking &quot;%1$s&quot;, %2$s\n%3$s → %4$s</string>
+    <string name="sd_card_not_mounted">SD card not mounted</string>
+    <string name="invalid_booking">Invalid Booking</string>
+    <string name="an_account_with_this_name_exists_already">An account with this name exists already.</string>
+    <string name="add_new">Add new...</string>
+    <string name="create">Create</string>
+    <string name="overview">Overview</string>
+    <string name="bookings_overview">Bookings Overview</string>
+    <string name="booking">Booking</string>
+    <string name="internal_error">Internal Error</string>
+    
 </resources>

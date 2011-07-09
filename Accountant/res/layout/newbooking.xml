@@ -6,25 +6,31 @@
     >
     <LinearLayout
         android:id="@+id/top_bar"
-        
-        android:background="@android:color/background_dark" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="2dp">
-        <Button android:id="@+id/bookings_list_button" android:layout_width="wrap_content" android:background="@drawable/list_button" android:layout_height="35dp"></Button>
+        android:background="@android:color/background_dark" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="2dp" android:baselineAligned="true">
+        <Button android:id="@+id/bookings_list_button" android:layout_width="wrap_content"  android:layout_height="wrap_content"  android:layout_weight="0" android:text="@string/overview"></Button>
+        <TextView android:gravity="center_horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/new_booking" android:layout_weight="1" android:id="@+id/title"></TextView>
+        <Button android:layout_width="wrap_content" android:layout_gravity="right" android:layout_height="wrap_content" android:id="@+id/create_booking_button" android:text="@string/create" android:layout_weight="0"></Button>
     </LinearLayout>
-    <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="Amount" android:id="@+id/amount_label"></TextView>
-    <LinearLayout android:layout_height="wrap_content" android:id="@+id/linearLayout1" android:layout_width="match_parent">
-        <EditText android:numeric="decimal" android:layout_height="wrap_content" android:hint="@string/amount" android:layout_width="wrap_content" android:id="@+id/amount" android:inputType="phone|numberDecimal"></EditText>
-        <Spinner android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/booking_type_spinner"></Spinner>
-    </LinearLayout>
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/text_label" android:text="@string/text"></TextView>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/linearLayout2" android:orientation="horizontal" android:layout_gravity="fill_horizontal" android:gravity="fill_horizontal">
-        <EditText android:id="@+id/text_edit" android:hint="@string/text" android:layout_height="wrap_content" android:layout_width="wrap_content" android:layout_weight="1"></EditText>
-        <Button android:layout_height="wrap_content" android:layout_weight="0" android:layout_width="100dip" android:text="@string/choose" android:id="@+id/text_chooser_button"></Button>
-    </LinearLayout>
-    <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="@string/bank" android:id="@+id/source_label"></TextView>
-    <Spinner android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/source_spinner"></Spinner>
-    <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="@string/category" android:id="@+id/dest_label"></TextView>
-    <Spinner android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/dest_spinner"></Spinner>
-    <TextView android:layout_height="wrap_content" android:text="@string/date" android:layout_width="wrap_content" android:id="@+id/date_label"></TextView>
-    <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Button" android:id="@+id/date_input"></Button>
-    <Button android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/create_booking_button" android:text="@string/create_booking"></Button>
+    <ScrollView android:id="@+id/scrollView1" android:layout_height="wrap_content" android:layout_width="match_parent">
+        <LinearLayout android:id="@+id/linearLayout3" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+            <TextView android:layout_height="wrap_content" android:text="@string/amount" android:layout_width="wrap_content"></TextView>
+            <LinearLayout android:id="@+id/linearLayout1" android:layout_height="wrap_content" android:layout_width="match_parent">
+                <TextView android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceMedium" android:text="CUR" android:id="@+id/currency" android:layout_width="wrap_content"></TextView>
+                <EditText android:layout_weight="1" android:layout_height="wrap_content" android:numeric="decimal" android:hint="@string/amount" android:id="@+id/amount" android:layout_width="wrap_content" android:inputType="phone|numberDecimal">
+                    <requestFocus></requestFocus>
+                </EditText>
+                <Spinner android:layout_weight="1" android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/booking_type_spinner"></Spinner>
+            </LinearLayout>
+            <TextView android:layout_height="wrap_content" android:text="@string/text" android:id="@+id/text_label" android:layout_width="wrap_content"></TextView>
+            <LinearLayout android:orientation="horizontal" android:id="@+id/linearLayout2" android:layout_height="wrap_content" android:layout_gravity="fill_horizontal" android:layout_width="match_parent" android:gravity="fill_horizontal">
+                <EditText android:layout_height="wrap_content" android:hint="@string/text" android:layout_weight="1" android:id="@+id/text_edit" android:layout_width="wrap_content"></EditText>
+            </LinearLayout>
+            <TextView android:layout_height="wrap_content" android:text="@string/bank" android:id="@+id/source_label" android:layout_width="wrap_content"></TextView>
+            <Spinner android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/source_spinner"></Spinner>
+            <TextView android:layout_height="wrap_content" android:text="@string/category" android:id="@+id/dest_label" android:layout_width="wrap_content"></TextView>
+            <Spinner android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/dest_spinner"></Spinner>
+            <TextView android:layout_height="wrap_content" android:text="@string/date" android:id="@+id/date_label" android:layout_width="wrap_content"></TextView>
+            <Button android:layout_height="wrap_content" android:id="@+id/date_input" android:text="Button" android:layout_width="wrap_content"></Button>
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

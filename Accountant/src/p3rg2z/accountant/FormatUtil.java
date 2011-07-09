@@ -11,34 +11,34 @@ public class FormatUtil {
 
     private FormatUtil() {}
 
-    private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance();
+    private static final NumberFormat LOCAL_CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance();
     private static final NumberFormat US_NUMBER_FORMATTER = NumberFormat.getNumberInstance(Locale.US);
-    private static final NumberFormat NUMBER_FORMATTER = NumberFormat.getNumberInstance();
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final NumberFormat LOCAL_NUMBER_FORMATTER = NumberFormat.getNumberInstance();
+    private static final DateFormat ISO_DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final DateFormat LOCAL_DATE_FORMATTER = DateFormat.getDateInstance(DateFormat.LONG);
 
-    public static Number parseAsLocalNumber(String s) throws ParseException {
-        return NUMBER_FORMATTER.parse(s);
+    private static Number parseAsLocalNumber(String s) throws ParseException {
+        return LOCAL_NUMBER_FORMATTER.parse(s);
     }
 
-    public static Number parseAsLocalCurrency(String s) throws ParseException {
-        return CURRENCY_FORMATTER.parse(s);
+    private static Number parseAsLocalCurrency(String s) throws ParseException {
+        return LOCAL_CURRENCY_FORMATTER.parse(s);
     }
 
     public static String formatAsLocalCurrency(Number n) {
-        return CURRENCY_FORMATTER.format(n);
+        return LOCAL_CURRENCY_FORMATTER.format(n);
     }
 
-    public static String formatDate(Date date) {
-        return DATE_FORMATTER.format(date);
+    public static String formatAsISO(Date date) {
+        return ISO_DATE_FORMATTER.format(date);
     }
 
-    public static String formatDateAsLocal(Date date) {
+    public static String formatAsLocal(Date date) {
         return LOCAL_DATE_FORMATTER.format(date);
     }
 
-    public static String reformatAsUS(String amount) throws ParseException {
-        Number number = parseAsLocalNumber(amount);
+    public static String reformatNumberAsISO(String numberString) throws ParseException {
+        Number number = parseAsLocalNumber(numberString);
         String currencyString = formatAsLocalCurrency(number);
         Number currencyNumber = parseAsLocalCurrency(currencyString);
         if (currencyNumber instanceof Long) {
@@ -48,13 +48,23 @@ public class FormatUtil {
         }
     }
 
-    public static String reformatAsLocal(String amount) throws ParseException {
-        Number number = US_NUMBER_FORMATTER.parse(amount);
-        return NUMBER_FORMATTER.format(number);
+    public static String reformatNumberAsLocal(String numberString) throws ParseException {
+        Number number = US_NUMBER_FORMATTER.parse(numberString);
+        return LOCAL_NUMBER_FORMATTER.format(number);
     }
 
-    public static Date parseAsUSDate(String s) throws ParseException {
-        return DATE_FORMATTER.parse(s);
+    public static String reformatNumberAsLocalCurrency(String numberString) throws ParseException {
+        Number number = US_NUMBER_FORMATTER.parse(numberString);
+        return LOCAL_CURRENCY_FORMATTER.format(number);
+    }
+
+    public static Date parseAsISODate(String s) throws ParseException {
+        return ISO_DATE_FORMATTER.parse(s);
+    }
+
+    public static String reformatAsLocalDateTime(String dateString) throws ParseException {
+        return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).
+            format(ISO_DATE_FORMATTER.parse(dateString));
     }
 
 }
