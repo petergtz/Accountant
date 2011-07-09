@@ -12,11 +12,11 @@ import java.util.Locale;
 import p3rg2z.accountant.Data.SourceAndDest;
 import p3rg2z.accountant.Tables.AccountType;
 import p3rg2z.accountant.Tables.Accounts;
+import p3rg2z.accountant.FileChooserActivity;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -46,6 +46,9 @@ public class NewBookingActivity extends Activity {
     private static final int ADD_SOURCE_DIALOG = 1;
     private static final int DATE_PICKER_DIALOG = 2;
     private static final int ADD_DEST_DIALOG = 3;
+
+    private static final int CHOOSE_TEXT_REQUEST = 0;
+    private static final int CHOOSE_FILE_REQUEST = 0;
 
     private Button bookingsListButton;
     private TextView title;
@@ -141,8 +144,7 @@ public class NewBookingActivity extends Activity {
     private void setUpBookingsListButton() {
         bookingsListButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                startActivity(new Intent().setComponent(
-                    new ComponentName(getApplicationContext(), bookingsListActivity())));
+                startActivity(new Intent().setClass(getApplicationContext(), bookingsListActivity()));
             }
         });
     }
@@ -181,13 +183,12 @@ public class NewBookingActivity extends Activity {
 
     private void setUpTextInput() {
         textInput.setOnTouchListener(new OnTouchListener() {
-            public boolean onTouch(View arg0, MotionEvent arg1) {
+            public boolean onTouch(View v, MotionEvent motionEvent) {
                 startActivityForResult(
-                        new Intent().
-                            setComponent(new ComponentName(getApplicationContext(), textChooseActivity())).
+                        new Intent().setClass(getApplicationContext(), textChooseActivity()).
                             putExtra("amount", amountInput.getText().toString()).
                             putExtra("text", textInput.getText().toString()),
-                        TextChooseActivity.CHOOSE_TEXT);
+                        CHOOSE_TEXT_REQUEST);
                 return true;
             }
         });
@@ -491,12 +492,13 @@ public class NewBookingActivity extends Activity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == TextChooseActivity.CHOOSE_TEXT &&
-             resultCode == TextChooseActivity.CHOOSE_TEXT_RESULT) {
+        if (requestCode == CHOOSE_TEXT_REQUEST && resultCode == RESULT_OK) {
             if (data != null) {
                 textInput.setText(data.getStringExtra("text"));
                 adjustSourceAndDestFor(data.getStringExtra("text"));
             }
+        } else if (requestCode == CHOOSE_FILE_REQUEST && resultCode == RESULT_OK) {
+            Toast.makeText(this, data.getStringExtra("path"), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -559,7 +561,8 @@ public class NewBookingActivity extends Activity {
     }
 
     private void goToImportMode() {
-        // TODO Auto-generated method stub
+        startActivityForResult(new Intent().setClass(this, FileChooserActivity.class),
+                               CHOOSE_FILE_REQUEST);
 
     }
 

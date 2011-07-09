@@ -12,8 +12,6 @@ import android.content.Intent;
 import android.os.Bundle;
 
 public class TextChooseActivity extends Activity {
-    public static final int CHOOSE_TEXT = 0;
-    public static final int CHOOSE_TEXT_RESULT = 0;
 
     @Override
     public void onCreate(Bundle savedInstance) {
@@ -43,7 +41,7 @@ public class TextChooseActivity extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         if (intent.getAction().equals(Intent.ACTION_SEARCH)) {
-            setResult(0, new Intent().putExtra("text", textFrom(intent)));
+            setResult(RESULT_OK, new Intent().putExtra("text", textFrom(intent)));
             finish();
         }
     }
