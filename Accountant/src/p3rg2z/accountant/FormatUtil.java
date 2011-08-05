@@ -67,4 +67,9 @@ public class FormatUtil {
             format(ISO_DATE_FORMATTER.parse(dateString));
     }
 
+    public static String reformatAsISODateTime(String dateString) throws ParseException {
+        return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US).
+            format(LOCAL_DATE_FORMATTER.parse(dateString));
+    }
+
 }

@@ -12,7 +12,6 @@ import java.util.Locale;
 import p3rg2z.accountant.Data.SourceAndDest;
 import p3rg2z.accountant.Tables.AccountType;
 import p3rg2z.accountant.Tables.Accounts;
-import p3rg2z.accountant.FileChooserActivity;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
@@ -48,7 +47,8 @@ public class NewBookingActivity extends Activity {
     private static final int ADD_DEST_DIALOG = 3;
 
     private static final int CHOOSE_TEXT_REQUEST = 0;
-    private static final int CHOOSE_FILE_REQUEST = 0;
+    private static final int CHOOSE_FILE_REQUEST = 1;
+    private static final int MAPPING_REQUEST = 2;
 
     private Button bookingsListButton;
     private TextView title;
@@ -499,6 +499,7 @@ public class NewBookingActivity extends Activity {
             }
         } else if (requestCode == CHOOSE_FILE_REQUEST && resultCode == RESULT_OK) {
             Toast.makeText(this, data.getStringExtra("path"), Toast.LENGTH_LONG).show();
+            startActivityForResult(new Intent().setClass(this, CSVMapperActivity.class), MAPPING_REQUEST);
         }
     }
 
@@ -561,8 +562,8 @@ public class NewBookingActivity extends Activity {
     }
 
     private void goToImportMode() {
-        startActivityForResult(new Intent().setClass(this, FileChooserActivity.class),
-                               CHOOSE_FILE_REQUEST);
+
+        startActivity(new Intent().setClass(this, FileChooserActivity.class));
 
     }
 

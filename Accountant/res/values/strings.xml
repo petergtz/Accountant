@@ -36,5 +36,12 @@
     <string name="bookings_overview">Bookings Overview</string>
     <string name="booking">Booking</string>
     <string name="internal_error">Internal Error</string>
-    
+    <string name="ignore_first_line_in_csv_file">Ignore first line in CSV file</string>
+    <string name="delimiter">Delimiter</string>
+    <string name="quoter">Quoter</string>
+    <string name="import_csv">Import</string>
+    <string name="unused">Unused</string>
+    <string name="could_not_start_import_specified_more_than_once">
+                                 Could not start import. %1$s was specified more than once.</string>
+    <string name="could_not_start_import_missing">Could not start import. %1$s is missing.</string>
 </resources>

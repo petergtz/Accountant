@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+    <Button android:layout_gravity="right" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/import_button" android:text="@string/import_csv"></Button>
+    <CheckBox android:text="@string/ignore_first_line_in_csv_file" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/ignore_first_line_input"></CheckBox>
+    <LinearLayout
+        android:id="@+id/delimiter_wrapper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/delimiter" android:id="@+id/textView1" android:layout_weight="0"></TextView>
+        <Spinner android:layout_height="wrap_content" android:layout_weight="1" android:id="@+id/delimiter_input" android:layout_width="5dip" >
+        </Spinner>
+        <TextView android:layout_height="wrap_content" android:layout_weight="0" android:id="@+id/textView2" android:text="@string/quoter" android:layout_width="wrap_content"></TextView>
+        <Spinner android:layout_height="wrap_content" android:layout_weight="1" android:id="@+id/quoter_input" android:layout_width="5dip" ></Spinner>
+    </LinearLayout>
+    <HorizontalScrollView android:id="@+id/horizontalScrollView1" android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <TableLayout android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/csv_table">
+        </TableLayout>
+    </HorizontalScrollView>
+    
+</LinearLayout>
