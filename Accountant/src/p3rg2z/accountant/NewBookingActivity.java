@@ -25,10 +25,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
+import android.view.View.OnFocusChangeListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
@@ -182,16 +181,24 @@ public class NewBookingActivity extends Activity {
     }
 
     private void setUpTextInput() {
-        textInput.setOnTouchListener(new OnTouchListener() {
-            public boolean onTouch(View v, MotionEvent motionEvent) {
-                startActivityForResult(
-                        new Intent().setClass(getApplicationContext(), textChooseActivity()).
-                            putExtra("amount", amountInput.getText().toString()).
-                            putExtra("text", textInput.getText().toString()),
-                        CHOOSE_TEXT_REQUEST);
-                return true;
+        textInput.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                startTextChooseActivity();
             }
         });
+        textInput.setOnFocusChangeListener(new OnFocusChangeListener() {
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) startTextChooseActivity();
+            }
+        });
+    }
+
+    private void startTextChooseActivity() {
+        startActivityForResult(
+                new Intent().setClass(getApplicationContext(), textChooseActivity()).
+                    putExtra("amount", amountInput.getText().toString()).
+                    putExtra("text", textInput.getText().toString()),
+                CHOOSE_TEXT_REQUEST);
     }
 
     private void adjustSourceAndDestFor(String text) {
