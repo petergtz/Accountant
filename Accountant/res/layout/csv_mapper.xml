@@ -16,6 +16,10 @@
         <TextView android:layout_height="wrap_content" android:layout_weight="0" android:id="@+id/textView2" android:text="@string/quoter" android:layout_width="wrap_content"></TextView>
         <Spinner android:layout_height="wrap_content" android:layout_weight="1" android:id="@+id/quoter_input" android:layout_width="5dip" ></Spinner>
     </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/linearLayout1">
+        <TextView android:id="@+id/textView3" android:layout_height="wrap_content" android:text="@string/encoding" android:layout_width="wrap_content"></TextView>
+        <Spinner android:layout_weight="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/encoding_input"></Spinner>
+    </LinearLayout>
     <HorizontalScrollView android:id="@+id/horizontalScrollView1" android:layout_width="wrap_content" android:layout_height="wrap_content">
         <TableLayout android:layout_width="match_parent" android:layout_height="match_parent" android:id="@+id/csv_table">
         </TableLayout>

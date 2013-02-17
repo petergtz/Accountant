@@ -44,4 +44,5 @@
     <string name="could_not_start_import_specified_more_than_once">
                                  Could not start import. %1$s was specified more than once.</string>
     <string name="could_not_start_import_missing">Could not start import. %1$s is missing.</string>
+    <string name="encoding">Encoding</string>
 </resources>

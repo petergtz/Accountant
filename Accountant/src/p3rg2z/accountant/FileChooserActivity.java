@@ -1,5 +1,7 @@
 package p3rg2z.accountant;
 
+import static java.io.File.separator;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +32,12 @@ public class FileChooserActivity extends Activity {
                 String basename = listView.getItemAtPosition(position).toString();
                 if (basename.equals("..")) {
                     goTo(new File(currentDir).getParent());
-                } else if (new File(currentDir + File.separator + basename).isDirectory()) {
-                    goTo(currentDir + File.separator + basename);
+                } else if (new File(currentDir + separator + basename).isDirectory()) {
+                    goTo(currentDir + separator + basename);
                 } else {
-                    startActivity(new Intent().setClass(getApplicationContext(), CSVMapperActivity.class));
-//                    setResult(RESULT_OK, new Intent().putExtra("path", currentDir + File.separator + basename));
-//                    finish();
+                    startActivity(new Intent().
+                                      setClass(getApplicationContext(), CSVMapperActivity.class).
+                                      putExtra("path", currentDir + separator + basename));
                 }
             }
         });

@@ -1,13 +1,17 @@
 package p3rg2z.accountant;
 
 import static android.widget.Toast.LENGTH_LONG;
-import static p3rg2z.accountant.FormatUtil.reformatAsISODateTime;
-import static p3rg2z.accountant.FormatUtil.reformatNumberAsISO;
+import static p3rg2z.accountant.FormatUtil.reformatAsCanonicalDateTime;
+import static p3rg2z.accountant.FormatUtil.reformatNumberAsCanonical;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +46,7 @@ public class CSVMapperActivity extends Activity {
     private Spinner separator;
     private Spinner quoter;
     private Button importButton;
+    private Spinner encoding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +58,24 @@ public class CSVMapperActivity extends Activity {
         setUpImportButton();
         setUpIgnoreFirstLineInput();
         setUpSeparatorAndQuoter();
+        setUpEncoding();
         setUpTable(readData());
+    }
+
+    private void setUpEncoding() {
+        encoding.setAdapter(new ArrayAdapter<Object>(
+                this,
+                android.R.layout.simple_spinner_item,
+                Charset.availableCharsets().keySet().toArray()) {{
+                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        }});
+        encoding.setOnItemSelectedListener(new OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+                setUpTable(readData());
+            }
+
+            public void onNothingSelected(AdapterView<?> av) {}
+        });
     }
 
     private void initMembers() {
@@ -63,8 +85,10 @@ public class CSVMapperActivity extends Activity {
         separator = (Spinner)findViewById(R.id.delimiter_input);
         quoter = (Spinner)findViewById(R.id.quoter_input);
         csvFile = csvFileFrom(getIntent());
+        encoding = (Spinner)findViewById(R.id.encoding_input);
     }
 
+    @SuppressWarnings("unused")
     private void showLongToast(int stringId, Object... formatArgs) {
         Toast.makeText(this, getString(stringId, formatArgs), LENGTH_LONG).show();
     }
@@ -86,11 +110,11 @@ public class CSVMapperActivity extends Activity {
                 for (String[] line : data) {
                     if (line.length != data.get(0).length) continue; // maybe empty line in CSV
                     try {
-                        Data.instance().addNewBooking(reformatNumberAsISO(line[colForField.get(1)]),
+                        Data.instance().addNewBooking(reformatNumberAsCanonical(line[colForField.get(1)]),
                                                       validateText(line[colForField.get(2)]),
                                                       validateAccount(line[colForField.get(3)]),
                                                       validateAccount(line[colForField.get(4)]),
-                                                      reformatAsISODateTime(line[colForField.get(5)]));
+                                                      reformatAsCanonicalDateTime(line[colForField.get(5)]));
                     } catch (ParseException e) {
                         showLongToast("Could not read date or amount. Not imported "+ line[colForField.get(2)]);
                     } catch (TextEmptyException e) {
@@ -235,7 +259,8 @@ public class CSVMapperActivity extends Activity {
             return readDataFrom(csvFile,
                     separator.getSelectedItem().toString().charAt(0),
                     quoter.getSelectedItem().toString().charAt(0),
-                    ignoreFirstLineInput.isChecked());
+                    ignoreFirstLineInput.isChecked(),
+                    encoding.getSelectedItem().toString());
         } catch (FileNotFoundException e) {
             showToastAndFinish("Could not find file "+ csvFile.getAbsolutePath());
             return null;
@@ -253,10 +278,11 @@ public class CSVMapperActivity extends Activity {
     @SuppressWarnings("serial")
     private static class ReadException extends Exception {}
 
-    private static List<String[]> readDataFrom(File file, char separator, char quoter, boolean ignoreFirstLine)
+    private static List<String[]> readDataFrom(File file, char separator, char quoter, boolean ignoreFirstLine, String charsetName)
             throws ReadException, FileNotFoundException {
 
-        CSVReader reader = new CSVReader(new FileReader(file), separator, quoter, ignoreFirstLine ? 1 : 0);
+        CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(file), Charset.forName(charsetName)), separator, quoter, ignoreFirstLine ? 1 : 0);
+//        CSVReader reader = new CSVReader(new FileReader(file), separator, quoter, ignoreFirstLine ? 1 : 0);
         try {
             return reader.readAll();
         } catch (IOException e) {

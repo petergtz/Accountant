@@ -4,6 +4,7 @@ import static android.widget.Toast.LENGTH_LONG;
 import static p3rg2z.accountant.Data.*;
 import static p3rg2z.accountant.FormatUtil.*;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Currency;
@@ -13,9 +14,11 @@ import p3rg2z.accountant.Data.SourceAndDest;
 import p3rg2z.accountant.Tables.AccountType;
 import p3rg2z.accountant.Tables.Accounts;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -41,9 +44,11 @@ import android.widget.Toast;
 
 public class NewBookingActivity extends Activity {
 
+    private static final String USE_AMOUNT_SEP = "useAmountSep";
     private static final int ADD_SOURCE_DIALOG = 1;
     private static final int DATE_PICKER_DIALOG = 2;
     private static final int ADD_DEST_DIALOG = 3;
+    private static final int AMOUNT_INPUT_METHOD_DIALOG = 4;
 
     private static final int CHOOSE_TEXT_REQUEST = 0;
     private static final int CHOOSE_FILE_REQUEST = 1;
@@ -194,9 +199,15 @@ public class NewBookingActivity extends Activity {
     }
 
     private void startTextChooseActivity() {
+        String formattedAmount;
+        try {
+            formattedAmount = amountFormattedForDatabase();
+        } catch (ParseException e) {
+            formattedAmount = "";
+        }
         startActivityForResult(
                 new Intent().setClass(getApplicationContext(), textChooseActivity()).
-                    putExtra("amount", amountInput.getText().toString()).
+                    putExtra("amount", formattedAmount).
                     putExtra("text", textInput.getText().toString()),
                 CHOOSE_TEXT_REQUEST);
     }
@@ -348,12 +359,12 @@ public class NewBookingActivity extends Activity {
         submitButton.setOnClickListener(new OnClickListener() {
             public void onClick(View paramView) {
                 try {
-                    String formattedAmount = reformatNumberAsISO(amountInput.getText().toString());
+                    String formattedAmount = amountFormattedForDatabase();
                     data.addNewBooking(formattedAmount,
                             textInput.getText().toString(),
                             ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
                             ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
-                            formatAsISO(cal.getTime()));
+                            formatAsCanonical(cal.getTime()));
 
                     showLongToast(R.string.created_new_booking,
                             textInput.getText().toString(),
@@ -376,11 +387,7 @@ public class NewBookingActivity extends Activity {
 
     private void preFillInputs(Cursor booking) {
         title.setText(R.string.booking);
-        try {
-            amountInput.setText(reformatNumberAsLocal(amountFrom(booking)));
-        } catch (ParseException e) {
-            amountInput.setText(R.string.error);
-        }
+        amountInput.setText(amountFormattedForOutput(amountFrom(booking)));
         int bookingModeIndex = data.bookingTypeFrom(booking).ordinal();
         bookingTypeInput.setSelection(bookingModeIndex);
 
@@ -390,7 +397,7 @@ public class NewBookingActivity extends Activity {
         selectTextIn(destInput, destFrom(booking));
 
         try {
-            cal.setTime(parseAsISODate(dateFrom(booking)));
+            cal.setTime(parseAsCanonicalDate(dateFrom(booking)));
             dateInput.setText(formatAsLocal(cal.getTime()));
         } catch (ParseException e) {
             cal = Calendar.getInstance();
@@ -403,16 +410,16 @@ public class NewBookingActivity extends Activity {
         submitButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 try {
-                    String formattedAmount = reformatNumberAsISO(amountInput.getText().toString());
-                    data.updateBooking(id, formattedAmount,
+                    String amount = amountFormattedForDatabase();
+                    data.updateBooking(id, amount,
                             textInput.getText().toString(),
                             ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
                             ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
-                            formatAsISO(cal.getTime()));
+                            formatAsCanonical(cal.getTime()));
 
                     showLongToast(R.string.saved_changes_in_booking,
                             textInput.getText().toString(),
-                            reformatNumberAsLocalCurrency(formattedAmount),
+                            reformatNumberAsLocalCurrency(amount),
                             ((Cursor)sourceInput.getSelectedItem()).getString(Accounts.NAME_INDEX),
                             ((Cursor)destInput.getSelectedItem()).getString(Accounts.NAME_INDEX));
                     finish();
@@ -446,9 +453,32 @@ public class NewBookingActivity extends Activity {
             return createAddAccountDialog(bookingMode.combinedWith(DEST), destInput);
         case DATE_PICKER_DIALOG:
             return createDatePickerDialog();
+        case AMOUNT_INPUT_METHOD_DIALOG:
+            return createAmountInputMethodDialog();
         default:
             throw new IllegalStateException();
         }
+    }
+
+    private Dialog createAmountInputMethodDialog() {
+        return new AlertDialog.Builder(this).
+            setTitle("Enter "+ formatAsLocalCurrency(123) +" as").
+            setSingleChoiceItems(new String[] { "123", String.valueOf(123*fractionDigits()) },
+                    usesAmountSeparator() ? 0 : 1,
+                    new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    if (which == 0) {
+                        getPreferences(MODE_PRIVATE).edit().putBoolean(USE_AMOUNT_SEP, true).commit();
+                    } else {
+                        getPreferences(MODE_PRIVATE).edit().putBoolean(USE_AMOUNT_SEP, false).commit();
+                    }
+                    dialog.dismiss();
+                }
+            }).create();
+    }
+
+    private static  int fractionDigits() {
+        return (int)Math.pow(10, Currency.getInstance(Locale.getDefault()).getDefaultFractionDigits());
     }
 
     private Dialog createDatePickerDialog() {
@@ -563,6 +593,9 @@ public class NewBookingActivity extends Activity {
         case R.id.import_csv:
             goToImportMode();
             return true;
+        case R.id.settings:
+            showDialog(AMOUNT_INPUT_METHOD_DIALOG);
+            return true;
         default:
             return super.onOptionsItemSelected(item);
         }
@@ -572,6 +605,40 @@ public class NewBookingActivity extends Activity {
 
         startActivity(new Intent().setClass(this, FileChooserActivity.class));
 
+    }
+
+    private String amountFormattedForDatabase() throws ParseException {
+
+        if (usesAmountSeparator()) {
+            return reformatNumberAsCanonical(amountInput.getText().toString());
+        } else {
+            try {
+                BigDecimal bd = new BigDecimal(Integer.parseInt(amountInput.getText().toString())).
+                divide(new BigDecimal(fractionDigits()));
+                return bd.toEngineeringString();
+            } catch (NumberFormatException exception) {
+                throw new ParseException(exception.toString(), -1);
+            }
+        }
+    }
+
+    private String amountFormattedForOutput(String amountFromDatabase) {
+
+        try {
+            if (usesAmountSeparator()) {
+                return reformatNumberAsLocal(amountFromDatabase);
+            } else {
+                return new BigDecimal(amountFromDatabase).multiply(new BigDecimal(fractionDigits())).
+                           toString();
+            }
+        } catch (ParseException e) {
+            showLongToast(R.string.internal_error);
+            return getString(R.string.error);
+        }
+    }
+
+    private boolean usesAmountSeparator() {
+        return getPreferences(MODE_PRIVATE).getBoolean(USE_AMOUNT_SEP, true);
     }
 
 }

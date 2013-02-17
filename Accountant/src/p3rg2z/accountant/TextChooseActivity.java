@@ -1,9 +1,5 @@
 package p3rg2z.accountant;
 
-import static p3rg2z.accountant.FormatUtil.reformatNumberAsISO;
-
-import java.text.ParseException;
-
 import android.app.Activity;
 import android.app.SearchManager;
 import android.app.SearchManager.OnCancelListener;
@@ -28,11 +24,7 @@ public class TextChooseActivity extends Activity {
 
     @Override
     public boolean onSearchRequested () {
-        try {
-            Data.setAmountForSuggestions(reformatNumberAsISO(getIntent().getStringExtra("amount")));
-        } catch (ParseException e) {
-            Data.setAmountForSuggestions("");
-        }
+        Data.setAmountForSuggestions(getIntent().getStringExtra("amount"));
         startSearch(getIntent().getStringExtra("text"), true, null, false);
         return true;
     }
